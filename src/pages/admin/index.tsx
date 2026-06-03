@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
-export default function Home() {
+export default function AdminIndex() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/submit-query');
+    router.replace('/admin/login');
   }, [router]);
 
   return null;

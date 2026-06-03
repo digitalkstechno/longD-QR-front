@@ -1,0 +1,269 @@
+import React from 'react';
+import Head from 'next/head';
+import DashboardLayout from '@/layouts/DashboardLayout';
+import { motion } from 'framer-motion';
+import { 
+  MessageSquare, 
+  Clock, 
+  CheckCircle2, 
+  ArrowUpRight,
+  ArrowDownRight,
+  Filter,
+  Download,
+  Activity,
+  AlertTriangle,
+  History,
+  Timer
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer
+} from 'recharts';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+
+const data = [
+  { name: 'Mon', queries: 45, resolved: 38 },
+  { name: 'Tue', queries: 52, resolved: 42 },
+  { name: 'Wed', queries: 48, resolved: 45 },
+  { name: 'Thu', queries: 70, resolved: 55 },
+  { name: 'Fri', queries: 65, resolved: 60 },
+  { name: 'Sat', queries: 85, resolved: 72 },
+  { name: 'Sun', queries: 75, resolved: 68 },
+];
+
+const kpis = [
+  { label: 'Total Queries', value: '1,284', trend: '+12%', isUp: true, icon: MessageSquare, color: 'gold' },
+  { label: 'Open Queries', value: '42', trend: '-5%', isUp: false, icon: Activity, color: 'gold' },
+  { label: 'In Progress', value: '28', trend: '+2', isUp: true, icon: Timer, color: 'gold' },
+  { label: 'Resolved Today', value: '156', trend: '+18%', isUp: true, icon: CheckCircle2, color: 'success' },
+  { label: 'Escalated', value: '8', trend: '+1', isUp: true, icon: AlertTriangle, color: 'danger' },
+  { label: 'Overdue', value: '3', trend: '-2', isUp: false, icon: Clock, color: 'danger' },
+];
+
+export default function DashboardPage() {
+  return (
+    <DashboardLayout>
+      <Head>
+        <title>Admin Dashboard | Query Management System</title>
+      </Head>
+
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-text-main mb-1">Operational Overview</h1>
+            <p className="text-text-muted text-sm">System status and query performance for today.</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button variant="secondary" className="space-x-2">
+              <Filter className="w-4 h-4" />
+              <span>Filter Data</span>
+            </Button>
+            <Button className="space-x-2">
+              <Download className="w-4 h-4" />
+              <span>Export Reports</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* KPI Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {kpis.map((kpi, i) => (
+            <motion.div
+              key={kpi.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <Card className="p-4 hover:border-brand-primary/30 transition-all cursor-pointer group hover:bg-brand-primary/[0.02]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-lg bg-bg-dark border border-border-subtle group-hover:bg-brand-primary/10 transition-colors`}>
+                    <kpi.icon className={`w-4 h-4 ${kpi.color === 'danger' ? 'text-danger' : kpi.color === 'success' ? 'text-success' : 'text-brand-primary'}`} />
+                  </div>
+                  <div className={`flex items-center text-[10px] font-bold ${kpi.isUp ? (kpi.color === 'danger' ? 'text-danger' : 'text-success') : 'text-text-muted'}`}>
+                    {kpi.trend}
+                    {kpi.isUp ? <ArrowUpRight className="w-3 h-3 ml-0.5" /> : <ArrowDownRight className="w-3 h-3 ml-0.5" />}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">{kpi.label}</p>
+                  <h3 className="text-xl font-bold text-text-main">{kpi.value}</h3>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 p-6">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-lg font-bold text-text-main flex items-center">
+                <Activity className="w-4 h-4 mr-2 text-brand-primary" />
+                Query Trends
+              </h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-brand-primary" />
+                  <span className="text-[10px] text-text-muted uppercase font-bold">New</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-brand-light" />
+                  <span className="text-[10px] text-text-muted uppercase font-bold">Resolved</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data}>
+                  <defs>
+                    <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#C8A45D" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#C8A45D" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8DCC2" vertical={false} />
+                  <XAxis dataKey="name" stroke="#6B7280" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#6B7280" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DCC2', borderRadius: '12px', boxShadow: '0 10px 30px -10px rgba(200, 164, 93, 0.15)' }}
+                    itemStyle={{ fontSize: '12px', color: '#1F2937' }}
+                    labelStyle={{ color: '#6B7280', fontWeight: 'bold' }}
+                  />
+                  <Area type="monotone" dataKey="queries" stroke="#C8A45D" strokeWidth={2} fillOpacity={1} fill="url(#colorQueries)" />
+                  <Area type="monotone" dataKey="resolved" stroke="#D6B97A" strokeWidth={2} fill="transparent" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="text-lg font-bold text-text-main mb-8 flex items-center">
+              <History className="w-4 h-4 mr-2 text-brand-primary" />
+              System Activity
+            </h3>
+            <div className="space-y-6">
+              {[
+                { type: 'resolved', msg: 'QRY-2026-085 resolved by David', time: '2m ago' },
+                { type: 'escalated', msg: 'QRY-2026-112 auto-escalated to Level 2', time: '12m ago' },
+                { type: 'assigned', msg: 'New query QRY-2026-120 assigned to Sarah', time: '25m ago' },
+                { type: 'note', msg: 'Internal note added to QRY-2026-045', time: '1h ago' },
+                { type: 'status', msg: 'Status updated for QRY-2026-092', time: '2h ago' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start space-x-3">
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
+                    item.type === 'resolved' ? 'bg-success' : 
+                    item.type === 'escalated' ? 'bg-danger' : 'bg-brand-primary'
+                  }`} />
+                  <div className="flex-1">
+                    <p className="text-xs text-text-main leading-tight mb-1">{item.msg}</p>
+                    <p className="text-[10px] text-text-muted uppercase font-bold">{item.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button variant="ghost" className="w-full mt-6 text-xs uppercase tracking-widest font-bold text-brand-primary hover:text-brand-dark">
+              View Audit Logs
+            </Button>
+          </Card>
+        </div>
+
+        {/* Bottom Row: Tables */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-0 overflow-hidden">
+            <div className="p-4 border-b border-border-subtle flex items-center justify-between">
+              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Critical Pending Queries</h3>
+              <Badge variant="danger">Attention Required</Badge>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
+                    <th className="px-4 py-3 font-bold">ID</th>
+                    <th className="px-4 py-3 font-bold">Customer</th>
+                    <th className="px-4 py-3 font-bold">SLA</th>
+                    <th className="px-4 py-3 font-bold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {[
+                    { id: 'QRY-2026-112', name: 'John Doe', sla: '12m remaining', color: 'danger' },
+                    { id: 'QRY-2026-105', name: 'Jane Smith', sla: '45m remaining', color: 'warning' },
+                    { id: 'QRY-2026-098', name: 'Mike Ross', sla: '1h 20m remaining', color: 'info' },
+                  ].map((q) => (
+                    <tr key={q.id} className="hover:bg-brand-primary/5 transition-colors group">
+                      <td className="px-4 py-3 font-bold text-brand-primary">{q.id}</td>
+                      <td className="px-4 py-3 text-text-main">{q.name}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${
+                            q.color === 'danger' ? 'bg-danger animate-pulse' : 
+                            q.color === 'warning' ? 'bg-warning' : 'bg-info'
+                          }`} />
+                          <span className="text-text-muted">{q.sla}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                          Handle
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <Card className="p-0 overflow-hidden">
+            <div className="p-4 border-b border-border-subtle flex items-center justify-between">
+              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Recent Escalations</h3>
+              <Button variant="ghost" size="sm" className="text-[10px] uppercase font-bold text-brand-primary">View Center</Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
+                    <th className="px-4 py-3 font-bold">ID</th>
+                    <th className="px-4 py-3 font-bold">Agent</th>
+                    <th className="px-4 py-3 font-bold">Missed By</th>
+                    <th className="px-4 py-3 font-bold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {[
+                    { id: 'QRY-2026-045', agent: 'David C.', missed: '2h 15m', level: 'L2' },
+                    { id: 'QRY-2026-032', agent: 'Sarah J.', missed: '45m', level: 'L1' },
+                    { id: 'QRY-2026-015', agent: 'Maria G.', missed: '1h 10m', level: 'L1' },
+                  ].map((e) => (
+                    <tr key={e.id} className="hover:bg-brand-primary/5 transition-colors group">
+                      <td className="px-4 py-3 font-bold text-brand-primary">{e.id}</td>
+                      <td className="px-4 py-3 text-text-main">{e.agent}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-danger font-bold">{e.missed}</span>
+                        <span className="ml-2 px-1.5 py-0.5 bg-danger/10 border border-danger/20 rounded text-[9px] font-bold">{e.level}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                          Review
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
