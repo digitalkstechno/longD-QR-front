@@ -5,13 +5,21 @@ import { Button } from '@/components/ui/Button';
 import { CheckCircle2, ArrowRight, Share2, ClipboardCheck, Clock, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { storage } from '@/utils/storage';
 
 export default function SuccessPage() {
   const router = useRouter();
   const { id } = router.query;
   
+  const [resolutionHours, setResolutionHours] = React.useState(24);
+
+  React.useEffect(() => {
+    const settings = storage.getSettings();
+    setResolutionHours(settings.globalResolutionHours);
+  }, []);
+  
   // Fallback to static ID if not supplied
-  const queryId = typeof id === 'string' ? id : 'QRY-2026-001';
+  const queryId = typeof id === 'string' ? id : 'TKT-2026-0001';
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(queryId);
@@ -60,7 +68,7 @@ export default function SuccessPage() {
               <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">Unique Query ID</p>
               <h3 className="text-2xl font-bold text-brand-primary font-mono tracking-tighter">{queryId}</h3>
             </div>
-            <Button variant="secondary" size="sm" className="h-10 w-10 p-0" onClick={copyToClipboard}>
+            <Button  size="sm" className="h-10 w-10 p-0" onClick={copyToClipboard}>
               <ClipboardCheck className="w-5 h-5" />
             </Button>
           </div>
@@ -71,14 +79,14 @@ export default function SuccessPage() {
                 <Clock className="w-3.5 h-3.5 text-brand-primary" />
                 <span className="text-[10px] text-text-muted uppercase font-bold">Estimated Resolution</span>
               </div>
-              <p className="text-sm font-bold text-text-main">Within 4 Hours</p>
+              <p className="text-sm font-bold text-text-main">Within {resolutionHours} Hours</p>
             </div>
             <div className="p-3 bg-bg-dark border border-border-subtle rounded-lg">
               <div className="flex items-center space-x-2 mb-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-brand-primary" />
                 <span className="text-[10px] text-text-muted uppercase font-bold">Status</span>
               </div>
-              <p className="text-sm font-bold text-success uppercase">Logged & Assigned</p>
+              <p className="text-sm font-bold text-success uppercase">Open</p>
             </div>
           </div>
         </div>

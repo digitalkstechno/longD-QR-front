@@ -1,18 +1,13 @@
 import React from 'react';
 import Head from 'next/head';
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { motion } from 'framer-motion';
-import { 
-  Users, 
-  UserPlus, 
-  MoreHorizontal, 
-  Mail, 
-  Shield, 
-  Building2, 
-  Activity,
+import {
+  UserPlus,
+  Building2,
   Edit,
   Trash2,
   Lock,
+  Unlock,
   Search,
   Filter,
   CheckCircle2,
@@ -21,17 +16,161 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-
-const users = [
-  { name: 'James Sterling', email: 'j.sterling@company.com', dept: 'Operations', role: 'Super Admin', status: 'Active', queries: 0 },
-  { name: 'David Chen', email: 'd.chen@company.com', dept: 'IT Support', role: 'Admin', status: 'Active', queries: 12 },
-  { name: 'Maria Garcia', email: 'm.garcia@company.com', dept: 'Customer Service', role: 'Manager', status: 'Active', queries: 25 },
-  { name: 'James Wilson', email: 'j.wilson@company.com', dept: 'Maintenance', role: 'Executive', status: 'Active', queries: 18 },
-  { name: 'Sarah Jenkins', email: 's.jenkins@company.com', dept: 'Front Desk', role: 'Executive', status: 'Away', queries: 8 },
-  { name: 'Robert Fox', email: 'r.fox@company.com', dept: 'Facilities', role: 'Executive', status: 'Inactive', queries: 0 },
-];
+import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { storage, User, Department } from '@/utils/storage';
+import { api } from '@/utils/api';
+import toast from 'react-hot-toast';
 
 export default function UserManagementPage() {
+  const [users, setUsers] = React.useState<any[]>([]);
+  const [departments, setDepartments] = React.useState<Department[]>([]);
+  const [roles, setRoles] = React.useState<any[]>([]);
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  // Filters
+  const [search, setSearch] = React.useState('');
+  const [deptFilter, setDeptFilter] = React.useState('All Departments');
+  const [roleFilter, setRoleFilter] = React.useState('All Roles');
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [modalMode, setModalMode] = React.useState<'create' | 'edit'>('create');
+  const [editingUserId, setEditingUserId] = React.useState('');
+
+  // Form State
+  const [formName, setFormName] = React.useState('');
+  const [formEmail, setFormEmail] = React.useState('');
+  const [formPassword, setFormPassword] = React.useState('');
+  const [formRole, setFormRole] = React.useState('');
+  const [formDeptId, setFormDeptId] = React.useState('');
+
+  const fetchData = async () => {
+    try {
+      const usersData = await api.getUsers();
+      const deptsData = await api.getDepartments();
+      const rolesData = await api.getRoles();
+      setUsers(usersData);
+      setDepartments(deptsData);
+      setRoles(rolesData);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchData();
+    const u = localStorage.getItem('user');
+    if (u) {
+      setCurrentUser(JSON.parse(u));
+    }
+  }, []);
+
+  const openCreateModal = () => {
+    setModalMode('create');
+    setFormName('');
+    setFormEmail('');
+    setFormPassword('');
+    setFormRole(roles.length > 0 ? roles[0].id : '');
+    setFormDeptId(departments.length > 0 ? departments[0].id : '');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = async (user: any) => {
+    try {
+      const liveUser = await api.getUserById(user.id);
+      setModalMode('edit');
+      setEditingUserId(liveUser.id);
+      setFormName(liveUser.name);
+      setFormEmail(liveUser.email);
+      setFormPassword(liveUser.password || ''); // Show the decrypted password!
+      let roleId = liveUser.role?._id || liveUser.role?.id;
+      if (!roleId && typeof liveUser.role === 'string') {
+        const match = roles.find(r => r.name === liveUser.role);
+        if (match) roleId = match.id;
+      }
+      setFormRole(roleId || (roles.length > 0 ? roles[0].id : ''));
+      setFormDeptId(liveUser.departmentId || '');
+      setIsModalOpen(true);
+    } catch (err) {
+      toast.error('Failed to load user details');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formName.trim() || !formEmail.trim()) return;
+
+    try {
+      // Find selected role to check if we should assign department
+      const selectedRoleObj = roles.find(r => r.id === formRole);
+      // We'll keep department if they have viewTickets but maybe not manageRoles
+      const needsDept = true; // Let's just always save department if selected for now
+
+      if (modalMode === 'create') {
+        if (!formPassword.trim()) return toast.error('Password is required for new users');
+        await api.createUser({
+          name: formName,
+          email: formEmail,
+          password: formPassword,
+          role: formRole,
+          departmentId: formDeptId || undefined,
+          isActive: true
+        });
+        toast.success('User created successfully!');
+      } else {
+        const payload: any = {
+          name: formName,
+          email: formEmail,
+          role: formRole,
+          departmentId: formDeptId || undefined
+        };
+        if (formPassword.trim()) payload.password = formPassword;
+
+        await api.updateUser(editingUserId, payload);
+        toast.success('User updated successfully!');
+      }
+      fetchData();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('Error saving user');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this user?")) {
+      try {
+        await api.deleteUser(id);
+        toast.success('User deleted!');
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        toast.error('Error deleting user');
+      }
+    }
+  };
+
+  const toggleStatus = async (user: User) => {
+    try {
+      await api.updateUser(user.id, { isActive: !user.isActive });
+      toast.success(`User ${user.isActive ? 'deactivated' : 'activated'}`);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Error toggling status');
+    }
+  };
+
+  const filteredUsers = users.filter(u => {
+    if (deptFilter !== 'All Departments' && u.departmentId !== deptFilter) return false;
+    if (roleFilter !== 'All Roles' && u.role?._id !== roleFilter && u.role?.id !== roleFilter) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      return u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s);
+    }
+    return true;
+  });
+
   return (
     <DashboardLayout>
       <Head>
@@ -44,38 +183,45 @@ export default function UserManagementPage() {
             <h1 className="text-2xl font-bold text-white mb-1">User Management</h1>
             <p className="text-text-muted text-sm">Manage administrative access and team assignments.</p>
           </div>
-          <Button className="space-x-2">
-            <UserPlus className="w-4 h-4" />
-            <span>Add New User</span>
-          </Button>
+          {(!currentUser || currentUser.role?.name === 'Admin' || currentUser.role?.permissions?.users?.create) && (
+            <Button className="space-x-2" onClick={openCreateModal}>
+              <UserPlus className="w-4 h-4" />
+              <span>Add New User</span>
+            </Button>
+          )}
         </div>
 
         <Card className="p-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-              <input 
-                type="text" 
-                placeholder="Search by name, email or department..." 
+              <input
+                type="text"
+                placeholder="Search by name or email..."
                 className="w-full bg-bg-dark border border-border-subtle rounded-lg py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-brand-primary/50"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            
+
             <div className="flex items-center space-x-3 overflow-x-auto pb-2 lg:pb-0">
-              <select className="bg-bg-dark border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-primary/50">
-                <option>All Departments</option>
-                <option>Operations</option>
-                <option>IT Support</option>
-                <option>Maintenance</option>
+              <select
+                className="bg-bg-dark border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-primary/50"
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+              >
+                <option value="All Departments">All Departments</option>
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
-              <select className="bg-bg-dark border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-primary/50">
-                <option>All Roles</option>
-                <option>Super Admin</option>
-                <option>Admin</option>
-                <option>Manager</option>
-                <option>Executive</option>
+              <select
+                className="bg-bg-dark border border-border-subtle rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-primary/50"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="All Roles">All Roles</option>
+                {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
-              <Button variant="secondary" size="sm" className="h-[34px]">
+              <Button size="sm" className="h-[34px]">
                 <Filter className="w-3.5 h-3.5" />
               </Button>
             </div>
@@ -91,74 +237,140 @@ export default function UserManagementPage() {
                   <th className="px-6 py-4">Department</th>
                   <th className="px-6 py-4">Role</th>
                   <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Active Workload</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
-                {users.map((user) => (
-                  <tr key={user.email} className="hover:bg-white/5 transition-colors group text-sm">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-lg bg-bg-dark border border-border-subtle flex items-center justify-center font-bold text-brand-primary">
-                          {user.name.split(' ').map(n => n[0]).join('')}
+                {filteredUsers.map((mappedUser) => {
+                  const dept = departments.find(d => d.id === mappedUser.departmentId);
+                  return (
+                    <tr key={mappedUser.id} className={`hover:bg-white/5 transition-colors group text-sm ${!mappedUser.isActive ? 'opacity-50' : ''}`}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-lg bg-bg-dark border border-border-subtle flex items-center justify-center font-bold text-brand-primary">
+                            {mappedUser.name.split(' ').map((n: string) => n[0]).join('')}
+                          </div>
+                          <div>
+                            <p className="text-white font-bold">{mappedUser.name}</p>
+                            <p className="text-[11px] text-text-muted">{mappedUser.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-bold">{user.name}</p>
-                          <p className="text-[11px] text-text-muted">{user.email}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2 text-text-muted">
+                          <Building2 className="w-3.5 h-3.5" />
+                          <span>{dept?.name || 'None'}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2 text-text-muted">
-                        <Building2 className="w-3.5 h-3.5" />
-                        <span>{user.dept}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={
-                        user.role === 'Super Admin' ? 'gold' :
-                        user.role === 'Admin' ? 'info' :
-                        user.role === 'Manager' ? 'warning' : 'outline'
-                      }>
-                        {user.role}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        {user.status === 'Active' ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                        ) : (
-                          <XCircle className="w-3.5 h-3.5 text-text-muted" />
-                        )}
-                        <span className={`text-xs font-bold uppercase ${user.status === 'Active' ? 'text-success' : 'text-text-muted'}`}>
-                          {user.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-white font-bold font-mono">
-                      {user.queries} Queries
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Lock className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-danger hover:text-danger hover:bg-danger/10">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant={mappedUser.role?.name === 'Admin' ? 'gold' : 'info'}>
+                          {mappedUser.role?.name || 'Unknown'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          {mappedUser.isActive ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                          ) : (
+                            <XCircle className="w-3.5 h-3.5 text-text-muted" />
+                          )}
+                          <span className={`text-xs font-bold uppercase ${mappedUser.isActive ? 'text-success' : 'text-text-muted'}`}>
+                            {mappedUser.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end space-x-1">
+                          {(!currentUser || currentUser.role?.name === 'Admin' || currentUser.role?.permissions?.users?.edit) && (
+                            <>
+                              <Button onClick={() => openEditModal(mappedUser)} size="sm" className="h-8 w-8 p-0" title="Edit">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" className="h-8 w-8 p-0" onClick={() => toggleStatus(mappedUser)} title={mappedUser.isActive ? 'Lock Account' : 'Unlock Account'}>
+                                {mappedUser.isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                              </Button>
+                            </>
+                          )}
+                          {(!currentUser || currentUser.role?.name === 'Admin' || currentUser.role?.permissions?.users?.delete) && (
+                            <Button size="sm" className="h-8 w-8 p-0 text-danger hover:text-danger hover:bg-danger/10" onClick={() => handleDelete(mappedUser.id)} title="Delete">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
+            {filteredUsers.length === 0 && (
+              <div className="p-8 text-center text-text-muted">
+                No users found.
+              </div>
+            )}
           </div>
         </Card>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={modalMode === 'create' ? 'Add New User' : 'Edit User'}
+      >
+        <div className="space-y-4">
+          <Input
+            label="Full Name"
+            placeholder="John Doe"
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+          />
+          <Input
+            label="Email Address"
+            type="email"
+            placeholder="john@example.com"
+            value={formEmail}
+            onChange={(e) => setFormEmail(e.target.value)}
+          />
+          <Input
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={formPassword}
+            onChange={(e) => setFormPassword(e.target.value)}
+          />
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-text-muted">Role</label>
+            <select
+              className="w-full bg-bg-dark border border-border-subtle rounded-lg px-4 py-2.5 text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-all text-sm"
+              value={formRole}
+              onChange={(e) => setFormRole(e.target.value)}
+            >
+              {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-text-muted">Department</label>
+            <select
+              className="w-full bg-bg-dark border border-border-subtle rounded-lg px-4 py-2.5 text-white appearance-none focus:outline-none focus:border-brand-primary/50 transition-all text-sm"
+              value={formDeptId}
+              onChange={(e) => setFormDeptId(e.target.value)}
+            >
+              <option value="">No Department</option>
+              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border-subtle">
+            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave}>
+              {modalMode === 'create' ? 'Create User' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </DashboardLayout>
   );
 }

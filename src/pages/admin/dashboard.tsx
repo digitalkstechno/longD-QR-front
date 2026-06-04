@@ -2,10 +2,10 @@ import React from 'react';
 import Head from 'next/head';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
-import { 
-  MessageSquare, 
-  Clock, 
-  CheckCircle2, 
+import {
+  MessageSquare,
+  Clock,
+  CheckCircle2,
   ArrowUpRight,
   ArrowDownRight,
   Filter,
@@ -15,18 +15,20 @@ import {
   History,
   Timer
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer
 } from 'recharts';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+
+import { storage, Ticket } from '@/utils/storage';
 
 const data = [
   { name: 'Mon', queries: 45, resolved: 38 },
@@ -38,16 +40,26 @@ const data = [
   { name: 'Sun', queries: 75, resolved: 68 },
 ];
 
-const kpis = [
-  { label: 'Total Queries', value: '1,284', trend: '+12%', isUp: true, icon: MessageSquare, color: 'gold' },
-  { label: 'Open Queries', value: '42', trend: '-5%', isUp: false, icon: Activity, color: 'gold' },
-  { label: 'In Progress', value: '28', trend: '+2', isUp: true, icon: Timer, color: 'gold' },
-  { label: 'Resolved Today', value: '156', trend: '+18%', isUp: true, icon: CheckCircle2, color: 'success' },
-  { label: 'Escalated', value: '8', trend: '+1', isUp: true, icon: AlertTriangle, color: 'danger' },
-  { label: 'Overdue', value: '3', trend: '-2', isUp: false, icon: Clock, color: 'danger' },
-];
-
 export default function DashboardPage() {
+  const [tickets, setTickets] = React.useState<Ticket[]>([]);
+
+  React.useEffect(() => {
+    setTickets(storage.getTickets());
+  }, []);
+
+  const total = tickets.length;
+  const open = tickets.filter(t => t.status === 'Open').length;
+  const inProgress = tickets.filter(t => t.status === 'In Progress').length;
+  const resolved = tickets.filter(t => t.status === 'Resolved').length;
+  const expired = tickets.filter(t => t.status === 'Expired').length;
+
+  const kpis = [
+    { label: 'Total Tickets', value: total.toString(), trend: '', isUp: true, icon: MessageSquare, color: 'gold' },
+    { label: 'Open', value: open.toString(), trend: '', isUp: false, icon: Activity, color: 'info' },
+    { label: 'In Progress', value: inProgress.toString(), trend: '', isUp: true, icon: Timer, color: 'warning' },
+    { label: 'Resolved', value: resolved.toString(), trend: '', isUp: true, icon: CheckCircle2, color: 'success' },
+    { label: 'Expired', value: expired.toString(), trend: '', isUp: true, icon: AlertTriangle, color: 'danger' },
+  ];
   return (
     <DashboardLayout>
       <Head>
@@ -62,7 +74,7 @@ export default function DashboardPage() {
             <p className="text-text-muted text-sm">System status and query performance for today.</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="secondary" className="space-x-2">
+            <Button className="space-x-2">
               <Filter className="w-4 h-4" />
               <span>Filter Data</span>
             </Button>
@@ -120,20 +132,20 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data}>
                   <defs>
                     <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#C8A45D" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#C8A45D" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#C8A45D" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#C8A45D" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E8DCC2" vertical={false} />
                   <XAxis dataKey="name" stroke="#6B7280" fontSize={10} tickLine={false} axisLine={false} />
                   <YAxis stroke="#6B7280" fontSize={10} tickLine={false} axisLine={false} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DCC2', borderRadius: '12px', boxShadow: '0 10px 30px -10px rgba(200, 164, 93, 0.15)' }}
                     itemStyle={{ fontSize: '12px', color: '#1F2937' }}
                     labelStyle={{ color: '#6B7280', fontWeight: 'bold' }}
@@ -159,10 +171,9 @@ export default function DashboardPage() {
                 { type: 'status', msg: 'Status updated for QRY-2026-092', time: '2h ago' },
               ].map((item, i) => (
                 <div key={i} className="flex items-start space-x-3">
-                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
-                    item.type === 'resolved' ? 'bg-success' : 
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${item.type === 'resolved' ? 'bg-success' :
                     item.type === 'escalated' ? 'bg-danger' : 'bg-brand-primary'
-                  }`} />
+                    }`} />
                   <div className="flex-1">
                     <p className="text-xs text-text-main leading-tight mb-1">{item.msg}</p>
                     <p className="text-[10px] text-text-muted uppercase font-bold">{item.time}</p>
@@ -170,7 +181,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-            <Button variant="ghost" className="w-full mt-6 text-xs uppercase tracking-widest font-bold text-brand-primary hover:text-brand-dark">
+            <Button className="w-full mt-6 text-xs uppercase tracking-widest font-bold text-brand-primary hover:text-brand-dark">
               View Audit Logs
             </Button>
           </Card>
@@ -180,8 +191,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-0 overflow-hidden">
             <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Critical Pending Queries</h3>
-              <Badge variant="danger">Attention Required</Badge>
+              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Recent Tickets</h3>
+              <Badge variant="danger">Review Expired</Badge>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -189,35 +200,26 @@ export default function DashboardPage() {
                   <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
                     <th className="px-4 py-3 font-bold">ID</th>
                     <th className="px-4 py-3 font-bold">Customer</th>
-                    <th className="px-4 py-3 font-bold">SLA</th>
-                    <th className="px-4 py-3 font-bold text-right">Action</th>
+                    <th className="px-4 py-3 font-bold">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {[
-                    { id: 'QRY-2026-112', name: 'John Doe', sla: '12m remaining', color: 'danger' },
-                    { id: 'QRY-2026-105', name: 'Jane Smith', sla: '45m remaining', color: 'warning' },
-                    { id: 'QRY-2026-098', name: 'Mike Ross', sla: '1h 20m remaining', color: 'info' },
-                  ].map((q) => (
-                    <tr key={q.id} className="hover:bg-brand-primary/5 transition-colors group">
+                  {tickets.slice(0, 5).map((q) => (
+                    <tr key={q.id} className={`transition-colors group ${q.status === 'Expired' ? 'bg-danger/5 hover:bg-danger/10' : 'hover:bg-brand-primary/5'}`}>
                       <td className="px-4 py-3 font-bold text-brand-primary">{q.id}</td>
-                      <td className="px-4 py-3 text-text-main">{q.name}</td>
+                      <td className="px-4 py-3 text-text-main">{q.customerName}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${
-                            q.color === 'danger' ? 'bg-danger animate-pulse' : 
-                            q.color === 'warning' ? 'bg-warning' : 'bg-info'
-                          }`} />
-                          <span className="text-text-muted">{q.sla}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                          Handle
-                        </Button>
+                        <Badge variant={q.status === 'Expired' ? 'danger' : q.status === 'Resolved' ? 'success' : q.status === 'In Progress' ? 'warning' : 'info'}>
+                          {q.status}
+                        </Badge>
                       </td>
                     </tr>
                   ))}
+                  {tickets.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-6 text-center text-text-muted">No tickets found</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -225,39 +227,26 @@ export default function DashboardPage() {
 
           <Card className="p-0 overflow-hidden">
             <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Recent Escalations</h3>
-              <Button variant="ghost" size="sm" className="text-[10px] uppercase font-bold text-brand-primary">View Center</Button>
+              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Department Wise Count</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
-                    <th className="px-4 py-3 font-bold">ID</th>
-                    <th className="px-4 py-3 font-bold">Agent</th>
-                    <th className="px-4 py-3 font-bold">Missed By</th>
-                    <th className="px-4 py-3 font-bold text-right">Action</th>
+                    <th className="px-4 py-3 font-bold">Department</th>
+                    <th className="px-4 py-3 font-bold text-right">Tickets</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {[
-                    { id: 'QRY-2026-045', agent: 'David C.', missed: '2h 15m', level: 'L2' },
-                    { id: 'QRY-2026-032', agent: 'Sarah J.', missed: '45m', level: 'L1' },
-                    { id: 'QRY-2026-015', agent: 'Maria G.', missed: '1h 10m', level: 'L1' },
-                  ].map((e) => (
-                    <tr key={e.id} className="hover:bg-brand-primary/5 transition-colors group">
-                      <td className="px-4 py-3 font-bold text-brand-primary">{e.id}</td>
-                      <td className="px-4 py-3 text-text-main">{e.agent}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-danger font-bold">{e.missed}</span>
-                        <span className="ml-2 px-1.5 py-0.5 bg-danger/10 border border-danger/20 rounded text-[9px] font-bold">{e.level}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                          Review
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {storage.getDepartments().map(dept => {
+                    const count = tickets.filter(t => t.departmentId === dept.id).length;
+                    return (
+                      <tr key={dept.id} className="hover:bg-brand-primary/5 transition-colors">
+                        <td className="px-4 py-3 text-text-main">{dept.name}</td>
+                        <td className="px-4 py-3 text-right font-bold">{count}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

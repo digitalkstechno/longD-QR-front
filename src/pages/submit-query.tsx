@@ -10,66 +10,68 @@ import {
   Tag, 
   FileText, 
   Upload,
-  Search
+  Search,
+  Building
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { storage, Department } from '@/utils/storage';
+import { api } from '@/utils/api';
+import toast from 'react-hot-toast';
 
 export default function PublicQueryForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
-  const [category, setCategory] = useState('Technical Support');
+  const [departmentId, setDepartmentId] = useState('');
+  const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchDepartments = async () => {
+    try {
+      const data = await api.getDepartments();
+      const activeDepts = data.filter((d: Department) => d.isActive);
+      setDepartments(activeDepts);
+      if (activeDepts.length > 0) {
+        setDepartmentId(activeDepts[0].id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Auto-generate query ID: e.g. QRY-2026-XXXX
-    const generatedId = `QRY-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    
-    // Create query object
-    const newQuery = {
-      id: generatedId,
-      customer: name,
-      mobile: mobile,
-      email: email,
-      category: category,
-      priority: 'Low', // Set default priority to Low
-      description: description,
-      status: 'Logged & Assigned',
-      assignedTo: 'Support Queue',
-      createdDate: new Date().toLocaleString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-      }),
-      expectedResolution: 'Within 4 Hours',
-      timeline: [
-        { title: 'Query Submitted', time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), desc: 'Query successfully logged in the system.', status: 'completed' },
-        { title: 'Department Assigned', time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), desc: `Routed to ${category} department.`, status: 'completed' },
-        { title: 'Agent Assignment', time: '--:--', desc: 'Pending agent assignment.', status: 'active' },
-        { title: 'Work in Progress', time: '--:--', desc: 'Agent is currently working on the resolution.', status: 'pending' },
-        { title: 'Resolution', time: '--:--', desc: 'Pending agent confirmation.', status: 'pending' },
-      ]
-    };
-    
-    // Save to localStorage
-    const existing = localStorage.getItem('submitted_queries');
-    const queries = existing ? JSON.parse(existing) : [];
-    queries.push(newQuery);
-    localStorage.setItem('submitted_queries', JSON.stringify(queries));
-    
-    // Simulate API call and redirect
-    setTimeout(() => {
-      router.push(`/success?id=${generatedId}`);
-    }, 1200);
+    try {
+      const settings = storage.getSettings();
+      const ticket = await api.createTicket({
+        customerName: name,
+        mobileNumber: mobile,
+        email: email,
+        departmentId: departmentId,
+        subject: subject,
+        description: description,
+        globalResolutionHours: settings.globalResolutionHours
+      });
+
+      // Navigate to success page
+      toast.success('Query submitted successfully!');
+      router.push(`/success?id=${ticket.id}`);
+    } catch (error) {
+      console.error('Error submitting query:', error);
+      toast.error('Failed to submit query. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -131,22 +133,32 @@ export default function PublicQueryForm() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-text-muted">Query Category</label>
-            <div className="relative">
-              <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-              <select 
-                className="w-full bg-bg-dark border border-border-subtle rounded-lg pl-11 pr-4 py-2.5 text-text-main appearance-none focus:outline-none focus:border-brand-primary/50 transition-all text-sm"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option>Technical Support</option>
-                <option>Billing & Payments</option>
-                <option>Service Feedback</option>
-                <option>Maintenance Request</option>
-                <option>Other</option>
-              </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-text-muted">Department</label>
+              <div className="relative">
+                <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <select 
+                  className="w-full bg-bg-dark border border-border-subtle rounded-lg pl-11 pr-4 py-2.5 text-text-main appearance-none focus:outline-none focus:border-brand-primary/50 transition-all text-sm"
+                  value={departmentId}
+                  onChange={(e) => setDepartmentId(e.target.value)}
+                  required
+                >
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.id}>{dept.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            <Input 
+              label="Subject"
+              placeholder="Brief summary of your issue"
+              icon={<Tag className="w-4 h-4" />}
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+            />
           </div>
 
           <div className="space-y-2">

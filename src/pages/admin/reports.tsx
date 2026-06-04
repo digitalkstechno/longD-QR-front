@@ -2,12 +2,12 @@ import React from 'react';
 import Head from 'next/head';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
-import { 
-  BarChart3, 
-  Download, 
-  Calendar, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  BarChart3,
+  Download,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
   ArrowRight,
@@ -16,16 +16,16 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  LineChart, 
-  Line, 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  LineChart,
+  Line,
   Cell,
   PieChart,
   Pie,
@@ -63,7 +63,7 @@ export default function ReportsAnalyticsPage() {
             <p className="text-text-muted text-sm">In-depth operational analysis and performance metrics.</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="secondary" className="space-x-2 h-9 text-xs">
+            <Button className="space-x-2 h-9 text-xs">
               <Calendar className="w-3.5 h-3.5" />
               <span>Custom Range</span>
             </Button>
@@ -76,7 +76,7 @@ export default function ReportsAnalyticsPage() {
 
         {/* Analytics Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Main Chart */}
           <Card className="lg:col-span-8 p-0 overflow-hidden">
             <div className="p-4 border-b border-border-subtle bg-bg-dark/30 flex items-center justify-between">
@@ -92,14 +92,14 @@ export default function ReportsAnalyticsPage() {
                   <AreaChart data={queryData}>
                     <defs>
                       <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
                     <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                     <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                       itemStyle={{ fontSize: '11px' }}
                     />
@@ -159,7 +159,7 @@ export default function ReportsAnalyticsPage() {
           <Card className="lg:col-span-5 p-0 overflow-hidden">
             <div className="p-4 border-b border-border-subtle bg-bg-dark/30 flex items-center justify-between">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest">Agent Efficiency Ranking</h3>
-              <Button variant="ghost" size="sm" className="h-7 text-[9px] uppercase font-bold">View Full Leaderboard</Button>
+              <Button size="sm" className="h-7 text-[9px] uppercase font-bold">View Full Leaderboard</Button>
             </div>
             <div className="p-6 space-y-4">
               {[
