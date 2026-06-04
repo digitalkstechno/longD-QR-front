@@ -46,12 +46,12 @@ export default function NotificationCenterPage() {
 
   useEffect(() => {
     fetchNotifications();
-    
+
     const handleUpdate = () => {
       fetchNotifications();
     };
     window.addEventListener('notificationsUpdated', handleUpdate);
-    
+
     return () => {
       window.removeEventListener('notificationsUpdated', handleUpdate);
     };
@@ -161,20 +161,20 @@ export default function NotificationCenterPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             {notif.link && (
-                              <button 
+                              <button
                                 onClick={() => {
                                   const fixedLink = notif.link.replace('/admin/tickets/', '/admin/queries/');
                                   window.location.href = fixedLink;
                                 }}
-                                className="text-[10px] font-bold text-brand-primary hover:text-brand-light uppercase tracking-widest transition-colors"
+                                className="text-[10px] font-bold text-brand-primary uppercase tracking-widest transition-colors"
                               >
                                 View Details
                               </button>
                             )}
                             {!notif.isRead && (
-                              <button 
+                              <button
                                 onClick={() => markAsRead(notif._id)}
-                                className="text-[10px] font-bold text-text-muted uppercase tracking-widest transition-colors hover:text-white"
+                                className="text-[10px] font-bold text-text-muted uppercase tracking-widest transition-colors "
                               >
                                 Mark as read
                               </button>
@@ -184,7 +184,7 @@ export default function NotificationCenterPage() {
                             <button className="p-1.5 text-text-muted transition-colors ">
                               <MoreVertical className="w-4 h-4" />
                             </button>
-                            <button 
+                            <button
                               onClick={() => deleteNotification(notif._id)}
                               className="p-1.5 text-text-muted hover:text-danger transition-colors"
                             >
