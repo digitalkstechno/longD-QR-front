@@ -11,11 +11,22 @@ export default function SuccessPage() {
   const router = useRouter();
   const { id } = router.query;
   
-  const [resolutionHours, setResolutionHours] = React.useState(24);
-
+  const [resolutionTime, setResolutionTime] = React.useState('24 hours');
+  
   React.useEffect(() => {
-    const settings = storage.getSettings();
-    setResolutionHours(settings.globalResolutionHours);
+    const fetchResolutionTime = async () => {
+      try {
+        const { api } = await import('@/utils/api');
+        const resTimes = await api.getResolutionTimes();
+        const activeResTime = resTimes.find((r: any) => r.isActive);
+        if (activeResTime) {
+          setResolutionTime(activeResTime.label);
+        }
+      } catch (err) {
+        console.error('Failed to fetch resolution times', err);
+      }
+    };
+    fetchResolutionTime();
   }, []);
   
   // Fallback to static ID if not supplied
@@ -79,7 +90,7 @@ export default function SuccessPage() {
                 <Clock className="w-3.5 h-3.5 text-brand-primary" />
                 <span className="text-[10px] text-text-muted uppercase font-bold">Estimated Resolution</span>
               </div>
-              <p className="text-sm font-bold text-text-main">Within {resolutionHours} Hours</p>
+              <p className="text-sm font-bold text-text-main">Within {resolutionTime}</p>
             </div>
             <div className="p-3 bg-bg-dark border border-border-subtle rounded-lg">
               <div className="flex items-center space-x-2 mb-1">

@@ -41,10 +41,23 @@ const data = [
 ];
 
 export default function DashboardPage() {
-  const [tickets, setTickets] = React.useState<Ticket[]>([]);
+  const [tickets, setTickets] = React.useState<any[]>([]);
+  const [departments, setDepartments] = React.useState<any[]>([]);
 
   React.useEffect(() => {
-    setTickets(storage.getTickets());
+    const fetchData = async () => {
+      try {
+        const { api } = await import('@/utils/api');
+        const ticketsRes = await api.getTickets(1, 1000); // Fetch a large limit for dashboard aggregation
+        setTickets(ticketsRes.data || []);
+        
+        const deptsRes = await api.getDepartments();
+        setDepartments(deptsRes);
+      } catch (err) {
+        console.error('Error fetching dashboard data', err);
+      }
+    };
+    fetchData();
   }, []);
 
   const total = tickets.length;
@@ -238,7 +251,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {storage.getDepartments().map(dept => {
+                  {departments.map(dept => {
                     const count = tickets.filter(t => t.departmentId === dept.id).length;
                     return (
                       <tr key={dept.id} className="hover:bg-brand-primary/5 transition-colors">

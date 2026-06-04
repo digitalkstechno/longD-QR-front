@@ -98,6 +98,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       );
     });
 
+    socket.on('ticket_expired', (ticket) => {
+      fetchNotifications(); // Refresh notifications for SLA warning
+      toast.error(
+        <div>
+          <strong>SLA Timeout Escalation!</strong>
+          <br />
+          <span className="text-xs font-mono">{ticket.id}</span>
+          <br />
+          <span className="text-[10px] text-text-muted">Ticket expired and requires admin attention.</span>
+        </div>,
+        { duration: 10000, icon: '⚠️' }
+      );
+    });
+
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setIsSidebarOpen(true);

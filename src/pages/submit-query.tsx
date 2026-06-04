@@ -29,8 +29,9 @@ export default function PublicQueryForm() {
   const [departmentId, setDepartmentId] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
+  const [resolutionTime, setResolutionTime] = useState<string | null>(null);
 
-  const fetchDepartments = async () => {
+  const fetchInitialData = async () => {
     try {
       const data = await api.getDepartments();
       const activeDepts = data.filter((d: Department) => d.isActive);
@@ -38,13 +39,19 @@ export default function PublicQueryForm() {
       if (activeDepts.length > 0) {
         setDepartmentId(activeDepts[0].id);
       }
+
+      const resTimes = await api.getResolutionTimes();
+      const activeResTime = resTimes.find((r: any) => r.isActive);
+      if (activeResTime) {
+        setResolutionTime(activeResTime.label);
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
   React.useEffect(() => {
-    fetchDepartments();
+    fetchInitialData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +106,13 @@ export default function PublicQueryForm() {
               <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest mt-1">Operational Excellence</p>
             </div>
           </div>
-          <p className="text-text-muted max-w-md mx-auto">Please fill out the form below to submit your query or complaint. Our team will get back to you shortly.</p>
+          <p className="text-text-muted max-w-md mx-auto mb-4">Please fill out the form below to submit your query or complaint. Our team will get back to you shortly.</p>
+          {resolutionTime && (
+            <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-bold uppercase tracking-widest">
+              <span className="w-2 h-2 rounded-full bg-brand-primary mr-2 animate-pulse" />
+              Expected Resolution: {resolutionTime}
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="admin-card p-6 md:p-10 space-y-6">

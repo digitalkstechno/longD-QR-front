@@ -37,9 +37,8 @@ export default function TicketDetailPage() {
   const fetchTicket = async () => {
     if (id && typeof id === 'string') {
       try {
-        const tickets = await api.getTickets();
-        const found = tickets.find((t: Ticket) => t.id === id);
-        setTicket(found || null);
+        const ticketData = await api.getTicketById(id);
+        setTicket(ticketData);
         const depts = await api.getDepartments();
         setDepartments(depts);
       } catch (err) {
