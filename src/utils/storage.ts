@@ -20,6 +20,7 @@ export interface Ticket {
 export interface Department {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   isActive: boolean;
 }

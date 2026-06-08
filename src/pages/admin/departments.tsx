@@ -191,6 +191,9 @@ export default function DepartmentManagementPage() {
                         {dept.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                     </div>
+                    <div className="text-xs text-text-muted font-mono bg-bg-card px-2 py-1 rounded border border-border-subtle truncate" title={`submit-query?${dept.slug || dept.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                      submit-query?{dept.slug || dept.name.toLowerCase().replace(/\s+/g, '-')}
+                    </div>
                   </div>
                 </Card>
               </motion.div>

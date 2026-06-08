@@ -118,7 +118,7 @@ export default function PublicQueryForm() {
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Invalid URL</h2>
-          <p className="text-text-muted">Please use a valid department URL like /submit-query?room or /submit-query?restaurant</p>
+          <p className="text-text-muted">Please use a valid department URL like /submit-query?room-service or /submit-query?restaurant</p>
         </div>
       </div>
     );
@@ -130,7 +130,7 @@ export default function PublicQueryForm() {
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Department Not Found</h2>
-          <p className="text-text-muted">Please use a valid department URL like /submit-query?room or /submit-query?restaurant</p>
+          <p className="text-text-muted">Please use a valid department URL like /submit-query?room-service or /submit-query?restaurant</p>
         </div>
       </div>
     );
@@ -216,7 +216,7 @@ export default function PublicQueryForm() {
             {categories.length === 0 ? (
               <p className="text-xs text-text-muted italic">No categories available</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => {
                   const selected = categoryId === cat.id;
                   return (
@@ -224,27 +224,27 @@ export default function PublicQueryForm() {
                       key={cat.id}
                       type="button"
                       onClick={() => setCategoryId(cat.id)}
-                      className={`w-full text-left rounded-lg border px-4 py-3 transition-all ${
+                      className={`flex-none text-left rounded-lg border px-3 py-2 transition-all ${
                         selected
                           ? 'border-brand-primary bg-brand-primary/5'
                           : 'border-border-subtle bg-bg-dark hover:border-brand-primary/40'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shadow-sm p-1 border border-border-subtle flex items-center justify-center">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded-md overflow-hidden bg-white shadow-sm p-0.5 border border-border-subtle flex items-center justify-center">
                           <img src={cat.imageUrl || '/logo.webp'} alt="" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-text-main truncate">{cat.name}</p>
+                          <p className="text-xs font-bold text-text-main whitespace-nowrap">{cat.name}</p>
                         </div>
                         <div
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+                          className={`w-4 h-4 rounded-sm border flex items-center justify-center ${
                             selected
                               ? 'bg-brand-primary border-brand-primary'
                               : 'bg-transparent border-border-subtle'
                           }`}
                         >
-                          {selected && <Check className="w-3.5 h-3.5 text-white" />}
+                          {selected && <Check className="w-3 h-3 text-white" />}
                         </div>
                       </div>
                     </button>
