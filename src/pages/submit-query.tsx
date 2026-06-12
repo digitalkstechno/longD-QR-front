@@ -187,15 +187,7 @@ export default function PublicQueryForm() {
                 setMobile('+91 ' + numbersOnly);
               }}
             />
-            <div className="md:col-span-2">
-              <Input
-                label="Email Address"
-                type="email"
-                icon={<Mail className="w-4 h-4" />}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+          
           </div>
 
           {department.name === 'Room Service' && (
