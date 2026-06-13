@@ -136,7 +136,6 @@ export default function SLAPage() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <Button 
-                            variant="ghost" 
                             className="p-2"
                             onClick={() => {
                               setFormData({
@@ -152,8 +151,7 @@ export default function SLAPage() {
                           </Button>
                           {sla && (
                             <Button 
-                              variant="ghost" 
-                              className="p-2 text-danger"
+                              className="p-2 "
                               onClick={() => handleDelete(cat.id)}
                             >
                               <Trash2 className="w-4 h-4" />

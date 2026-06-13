@@ -26,7 +26,7 @@ export default function PublicQueryForm() {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('+91 ');
   const [email, setEmail] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [roomNumber, setRoomNumber] = useState('');
 
@@ -55,7 +55,7 @@ export default function PublicQueryForm() {
       const activeCats = cats.filter((c: any) => c.isActive);
       setCategories(activeCats);
       if (activeCats.length > 0) {
-        setCategoryId(activeCats[0].id);
+        setCategoryIds([activeCats[0].id]);
       }
     } catch (error) {
       console.error(error);
@@ -81,8 +81,8 @@ export default function PublicQueryForm() {
         return;
       }
 
-      if (!categoryId) {
-        toast.error('Please select a category');
+      if (categoryIds.length === 0) {
+        toast.error('Please select at least one category');
         return;
       }
       let finalDescription = description;
@@ -90,20 +90,38 @@ export default function PublicQueryForm() {
         finalDescription = `Room: ${roomNumber} - ${description}`;
       }
 
-      const ticket = await api.createTicket({
-        customerName: name,
-        mobileNumber: mobile,
-        email: email,
-        departmentId: department.id,
-        categoryId: categoryId,
-        description: finalDescription
-      });
+      const tickets = [];
+      const errors = [];
+      for (const catId of categoryIds) {
+        try {
+          const ticket = await api.createTicket({
+            customerName: name,
+            mobileNumber: mobile,
+            email: email,
+            departmentId: department.id,
+            categoryId: catId,
+            description: finalDescription
+          });
+          tickets.push(ticket);
+        } catch (err: any) {
+          console.error('Error for category', catId, err);
+          errors.push(err.message || 'Unknown error');
+        }
+      }
 
-      toast.success('Query submitted successfully!');
-      router.push(`/success?id=${ticket.id}`);
-    } catch (error) {
+      if (tickets.length > 0) {
+        if (errors.length > 0) {
+          toast.success(`Some queries submitted. Errors: ${errors.join(', ')}`);
+        } else {
+          toast.success(tickets.length > 1 ? 'Queries submitted successfully!' : 'Query submitted successfully!');
+        }
+        router.push(`/success?id=${tickets.map(t => t.id).join(',')}`);
+      } else {
+        toast.error(`Failed to submit query: ${errors[0] || 'Unknown error'}`);
+      }
+    } catch (error: any) {
       console.error('Error submitting query:', error);
-      toast.error('Failed to submit query. Please try again.');
+      toast.error(error.message || 'Failed to submit query. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -213,33 +231,37 @@ export default function PublicQueryForm() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => {
-                  const selected = categoryId === cat.id;
+                  const selected = categoryIds.includes(cat.id);
                   return (
                     <button
                       key={cat.id}
                       type="button"
-                      onClick={() => setCategoryId(cat.id)}
-                      className={`flex-none text-left rounded-lg border px-3 py-2 transition-all ${
+                      onClick={() => {
+                        setCategoryIds(prev => 
+                          prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                        );
+                      }}
+                      className={`flex-none text-left rounded-md border px-2.5 py-1.5 transition-all ${
                         selected
                           ? 'border-brand-primary bg-brand-primary/5'
                           : 'border-border-subtle bg-bg-dark hover:border-brand-primary/40'
                       }`}
                     >
                       <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded-md overflow-hidden bg-white shadow-sm p-0.5 border border-border-subtle flex items-center justify-center">
+                        <div className="w-5 h-5 rounded overflow-hidden bg-white shadow-sm p-0.5 border border-border-subtle flex items-center justify-center flex-shrink-0">
                           <img src={cat.imageUrl || '/logo.webp'} alt="" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-text-main whitespace-nowrap">{cat.name}</p>
+                          <p className="text-[11px] font-medium text-text-main whitespace-nowrap">{cat.name}</p>
                         </div>
                         <div
-                          className={`w-4 h-4 rounded-sm border flex items-center justify-center ${
+                          className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                             selected
                               ? 'bg-brand-primary border-brand-primary'
                               : 'bg-transparent border-border-subtle'
                           }`}
                         >
-                          {selected && <Check className="w-3 h-3 text-white" />}
+                          {selected && <Check className="w-2.5 h-2.5 text-white" />}
                         </div>
                       </div>
                     </button>

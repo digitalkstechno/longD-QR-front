@@ -139,8 +139,8 @@ export default function AssignmentsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Staff Assignments */}
-          <Card className="p-0 overflow-hidden">
-            <div className="p-4 border-b border-border-subtle flex items-center justify-between">
+          <Card className="p-0 overflow-hidden flex flex-col h-[720px]">
+            <div className="p-4 border-b border-border-subtle flex items-center justify-between shrink-0">
               <h3 className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center">
                 <User className="w-4 h-4 mr-2" />
                 Staff Assignments
@@ -150,10 +150,10 @@ export default function AssignmentsPage() {
                 <span>Assign</span>
               </Button>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto flex-1">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
+                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle sticky top-0 z-10">
                     <th className="px-4 py-3 font-bold">Category</th>
                     <th className="px-4 py-3 font-bold">Assigned To</th>
                     <th className="px-4 py-3 font-bold text-right">Actions</th>
@@ -180,7 +180,7 @@ export default function AssignmentsPage() {
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <Button 
-                              variant="ghost" 
+                              // variant="ghost" 
                               size="sm" 
                               className="p-1.5"
                               onClick={() => {
@@ -196,9 +196,9 @@ export default function AssignmentsPage() {
                             </Button>
                             {assignment && (
                               <Button 
-                                variant="ghost" 
+                                // variant="ghost" 
                                 size="sm" 
-                                className="p-1.5 text-danger"
+                                className="p-1.5"
                                 onClick={() => handleDeleteAssignment(cat.id)}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -215,8 +215,8 @@ export default function AssignmentsPage() {
           </Card>
 
           {/* Supervisor Assignments */}
-          <Card className="p-0 overflow-hidden">
-            <div className="p-4 border-b border-border-subtle flex items-center justify-between">
+          <Card className="p-0 overflow-hidden flex flex-col h-[720px]">
+            <div className="p-4 border-b border-border-subtle flex items-center justify-between shrink-0">
               <h3 className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center">
                 <Shield className="w-4 h-4 mr-2" />
                 Supervisor Assignments
@@ -226,10 +226,10 @@ export default function AssignmentsPage() {
                 <span>Assign</span>
               </Button>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto flex-1">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
+                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle sticky top-0 z-10">
                     <th className="px-4 py-3 font-bold">Category</th>
                     <th className="px-4 py-3 font-bold">Supervisor</th>
                     <th className="px-4 py-3 font-bold text-right">Actions</th>
@@ -256,7 +256,6 @@ export default function AssignmentsPage() {
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <Button 
-                              variant="ghost" 
                               size="sm" 
                               className="p-1.5"
                               onClick={() => {
@@ -272,9 +271,8 @@ export default function AssignmentsPage() {
                             </Button>
                             {supervisor && (
                               <Button 
-                                variant="ghost" 
                                 size="sm" 
-                                className="p-1.5 text-danger"
+                                className="p-1.5"
                                 onClick={() => handleDeleteSupervisor(cat.id)}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

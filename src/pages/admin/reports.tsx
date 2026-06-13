@@ -33,23 +33,162 @@ import {
   Area
 } from 'recharts';
 
-const queryData = [
-  { name: 'Mon', new: 45, resolved: 38 },
-  { name: 'Tue', new: 52, resolved: 42 },
-  { name: 'Wed', new: 48, resolved: 45 },
-  { name: 'Thu', new: 70, resolved: 55 },
-  { name: 'Fri', new: 65, resolved: 60 },
-  { name: 'Sat', new: 85, resolved: 72 },
-  { name: 'Sun', new: 75, resolved: 68 },
-];
-
-const resolutionData = [
-  { name: 'Within SLA', value: 85, color: '#3B82F6' },
-  { name: 'Near Breach', value: 10, color: '#F59E0B' },
-  { name: 'Breached', value: 5, color: '#EF4444' },
-];
+import { api } from '@/utils/api';
 
 export default function ReportsAnalyticsPage() {
+  const [loading, setLoading] = React.useState(true);
+  const [tickets, setTickets] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const res = await api.getTickets(1, 1000);
+        setTickets(res.data || res);
+      } catch (err) {
+        console.error('Error fetching tickets for reports', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTickets();
+  }, []);
+
+  const getQueryData = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const data = days.map(day => ({ name: day, new: 0, resolved: 0 }));
+
+    tickets.forEach(ticket => {
+      if (!ticket.createdAt) return;
+      const date = new Date(ticket.createdAt);
+      const dayName = days[date.getDay()];
+      const dayData = data.find(d => d.name === dayName);
+      if (dayData) {
+        dayData.new += 1;
+        if (ticket.status === 'Resolved') {
+          dayData.resolved += 1;
+        }
+      }
+    });
+
+    const sun = data.shift();
+    if (sun) data.push(sun);
+    
+    return data;
+  };
+
+  const getResolutionData = () => {
+    let withinSLA = 0;
+    let breached = 0;
+    let nearBreach = 0;
+
+    tickets.forEach(ticket => {
+      if (ticket.status === 'Time Expired' || ticket.status === 'Escalated') {
+        breached += 1;
+      } else if (ticket.status === 'Resolved' || ticket.status === 'Open' || ticket.status === 'In Progress') {
+        withinSLA += 1;
+      }
+    });
+
+    const total = withinSLA + breached + nearBreach;
+    if (total === 0) {
+      return [{ name: 'No Data', value: 1, color: '#64748b' }];
+    }
+
+    return [
+      { name: 'Within SLA', value: withinSLA, color: '#3B82F6' },
+      { name: 'Near Breach', value: nearBreach, color: '#F59E0B' },
+      { name: 'Breached', value: breached, color: '#EF4444' },
+    ].filter(d => d.value > 0);
+  };
+
+  const getAgentPerformance = () => {
+    const agents: Record<string, { name: string, resolved: number, total: number }> = {};
+    
+    tickets.forEach(ticket => {
+      if (ticket.assignedStaffId) {
+        const staffName = ticket.assignedStaffId.name || 'Unknown';
+        if (!agents[staffName]) {
+          agents[staffName] = { name: staffName, resolved: 0, total: 0 };
+        }
+        agents[staffName].total += 1;
+        if (ticket.status === 'Resolved') {
+          agents[staffName].resolved += 1;
+        }
+      }
+    });
+
+    let result = Object.values(agents)
+      .map(agent => ({
+        name: agent.name,
+        resolved: agent.resolved,
+        rate: agent.total > 0 ? Math.round((agent.resolved / agent.total) * 100) : 0,
+        img: agent.name.split(' ')[0]
+      }))
+      .sort((a, b) => b.resolved - a.resolved)
+      .slice(0, 4);
+
+    if (result.length === 0) {
+      return [{ name: 'No Agents Assigned', resolved: 0, rate: 0, img: 'Unknown' }];
+    }
+    return result;
+  };
+
+  const getDepartmentalSLA = () => {
+    const depts: Record<string, { name: string, breached: number, total: number }> = {};
+    
+    tickets.forEach(ticket => {
+      const deptName = ticket.departmentId?.name || 'Unknown';
+      if (!depts[deptName]) {
+        depts[deptName] = { name: deptName, breached: 0, total: 0 };
+      }
+      depts[deptName].total += 1;
+      if (ticket.status === 'Time Expired' || ticket.status === 'Escalated') {
+        depts[deptName].breached += 1;
+      }
+    });
+
+    let result = Object.values(depts)
+      .map(dept => {
+        const compliance = dept.total > 0 ? Math.round(((dept.total - dept.breached) / dept.total) * 100) : 100;
+        let status = 'success';
+        if (compliance < 90) status = 'warning';
+        if (compliance < 80) status = 'danger';
+        
+        return {
+          name: dept.name,
+          avg: 'N/A',
+          target: '2h',
+          status,
+          compliance
+        };
+      })
+      .slice(0, 4);
+
+    if (result.length === 0) {
+      return [{ name: 'No Departments', avg: '-', target: '-', status: 'success', compliance: 100 }];
+    }
+    return result;
+  };
+
+  const queryData = getQueryData();
+  const resolutionData = getResolutionData();
+  const agentPerformance = getAgentPerformance();
+  const departmentalSLA = getDepartmentalSLA();
+
+  const totalSLA = resolutionData.reduce((acc, curr) => acc + curr.value, 0);
+  const withinSLA = resolutionData.find(d => d.name === 'Within SLA')?.value || 0;
+  const inSLAPercentage = totalSLA > 0 && resolutionData[0].name !== 'No Data' ? Math.round((withinSLA / totalSLA) * 100) : 0;
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <Head>
@@ -137,7 +276,7 @@ export default function ReportsAnalyticsPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                  <p className="text-2xl font-bold text-white tracking-tighter">95%</p>
+                  <p className="text-2xl font-bold text-white tracking-tighter">{inSLAPercentage}%</p>
                   <p className="text-[9px] text-text-muted uppercase font-bold">In-SLA</p>
                 </div>
               </div>
@@ -162,12 +301,7 @@ export default function ReportsAnalyticsPage() {
               <Button size="sm" className="h-7 text-[9px] uppercase font-bold">View Full Leaderboard</Button>
             </div>
             <div className="p-6 space-y-4">
-              {[
-                { name: 'David Chen', resolved: 145, rate: 99, img: 'David' },
-                { name: 'Maria Garcia', resolved: 132, rate: 97, img: 'Maria' },
-                { name: 'James Wilson', resolved: 118, rate: 95, img: 'James' },
-                { name: 'Sarah Jenkins', resolved: 105, rate: 92, img: 'Sarah' },
-              ].map((agent, i) => (
+              {agentPerformance.map((agent, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-bg-dark border border-border-subtle rounded-xl hover:border-brand-primary/30 transition-all cursor-pointer group">
                   <div className="flex items-center space-x-3">
                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${agent.img}`} className="w-9 h-9 rounded-lg bg-bg-card" alt={agent.name} />
@@ -195,12 +329,7 @@ export default function ReportsAnalyticsPage() {
               </div>
             </div>
             <div className="p-6 space-y-4">
-              {[
-                { name: 'Customer Ops', avg: '42m', target: '30m', status: 'warning', compliance: 96 },
-                { name: 'IT Support', avg: '28m', target: '45m', status: 'success', compliance: 99 },
-                { name: 'Facilities Mgmt', avg: '1h 15m', target: '1h', status: 'danger', compliance: 85 },
-                { name: 'Tech Maintenance', avg: '55m', target: '1h', status: 'success', compliance: 92 },
-              ].map((dept, i) => (
+              {departmentalSLA.map((dept, i) => (
                 <div key={i} className="flex items-center justify-between p-4 bg-bg-dark border border-border-subtle rounded-xl group hover:border-brand-primary/30 transition-all">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 rounded-lg bg-bg-card flex items-center justify-center font-bold text-brand-primary group-hover:bg-brand-primary/10 transition-all">

@@ -153,7 +153,6 @@ export default function CategoriesPage() {
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end space-x-2">
                                 <Button 
-                                  variant="ghost" 
                                   className="p-2"
                                   onClick={() => {
                                     setEditingId(cat.id);
@@ -173,8 +172,7 @@ export default function CategoriesPage() {
                                   <Edit2 className="w-4 h-4" />
                                 </Button>
                                 <Button 
-                                  variant="ghost" 
-                                  className="p-2 text-danger"
+                                  className="p-2 "
                                   onClick={() => handleDelete(cat.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />

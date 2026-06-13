@@ -13,7 +13,8 @@ export default function SuccessPage() {
   const { id } = router.query;
   
   // Fallback to static ID if not supplied
-  const queryId = typeof id === 'string' ? id : 'TKT-2026-0001';
+  const allIds = typeof id === 'string' ? id.split(',') : ['TKT-2026-0001'];
+  const queryId = allIds[0];
   const [status, setStatus] = React.useState<string>('Open');
   const [estimatedResolution, setEstimatedResolution] = React.useState<string>('As per category SLA');
   const [expiryAtMs, setExpiryAtMs] = React.useState<number | null>(null);
@@ -111,8 +112,8 @@ export default function SuccessPage() {
   const estimatedResolutionText = countdownText || estimatedResolution;
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(queryId);
-    alert('Query ID copied to clipboard!');
+    navigator.clipboard.writeText(allIds.join(', '));
+    alert('Query IDs copied to clipboard!');
   };
 
   return (
@@ -154,8 +155,8 @@ export default function SuccessPage() {
         <div className="admin-card p-6 md:p-8 mb-8 text-left space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
             <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">Unique Query ID</p>
-              <h3 className="text-2xl font-bold text-brand-primary font-mono tracking-tighter">{queryId}</h3>
+              <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">{allIds.length > 1 ? 'Unique Query IDs' : 'Unique Query ID'}</p>
+              <h3 className="text-2xl font-bold text-brand-primary font-mono tracking-tighter">{allIds.join(', ')}</h3>
             </div>
             <Button  size="sm" className="h-10 w-10 p-0" onClick={copyToClipboard}>
               <ClipboardCheck className="w-5 h-5" />

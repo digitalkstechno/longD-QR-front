@@ -233,7 +233,7 @@ export default function TicketDetailPage() {
                   <label className="text-[10px] text-text-muted uppercase font-bold block mb-1">Description</label>
                   <p className="text-xs text-text-main leading-relaxed">{ticket.description}</p>
                 </div>
-                {isAdmin && (
+                {/* {isAdmin && (
                   <div>
                     <label className="text-[10px] text-text-muted uppercase font-bold block mb-1">Reassign Staff</label>
                     <div className="flex items-center space-x-2 bg-bg-dark border border-border-subtle rounded-lg px-2 h-9">
@@ -248,7 +248,7 @@ export default function TicketDetailPage() {
                       </select>
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
             </Card>
 

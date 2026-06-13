@@ -341,7 +341,7 @@ export default function UserManagementPage() {
                             </>
                           )}
                           {(!currentUser || currentUser.role?.name === 'Admin' || currentUser.role?.permissions?.users?.delete) && (
-                            <Button size="sm" className="h-8 w-8 p-0 text-danger hover:text-danger hover:bg-danger/10" onClick={() => handleDelete(mappedUser.id)} title="Delete">
+                            <Button size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(mappedUser.id)} title="Delete">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           )}

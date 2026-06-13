@@ -120,6 +120,19 @@ export default function RolesManagementPage() {
     });
   };
 
+  const handleToggleAll = (moduleKey: keyof typeof defaultPermissions, isChecked: boolean) => {
+    setFormPermissions(prev => {
+      const updated = { ...prev };
+      updated[moduleKey] = {
+        view: isChecked,
+        create: isChecked,
+        edit: isChecked,
+        delete: isChecked
+      };
+      return updated;
+    });
+  };
+
   const handleSave = async () => {
     if (!formName.trim()) return toast.error('Role name is required');
 
@@ -196,44 +209,82 @@ export default function RolesManagementPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {roles.map((role) => (
-            <Card key={role.id} className="p-0 overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-brand-primary" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {roles.map((role, i) => {
+            let activePerms = 0;
+            if (role.permissions) {
+              Object.values(role.permissions).forEach((mod: any) => {
+                if (mod.view) activePerms++;
+                if (mod.create) activePerms++;
+                if (mod.edit) activePerms++;
+                if (mod.delete) activePerms++;
+              });
+            }
+
+            return (
+              <motion.div 
+                key={role.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="group relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/20 to-brand-light/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <Card className="relative p-0 overflow-hidden border border-border-subtle bg-bg-card/80 backdrop-blur-xl group-hover:border-brand-primary/50 transition-all duration-300 h-full flex flex-col">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary to-brand-light opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <div className="p-6 flex-1">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 border border-brand-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                        <Shield className="w-6 h-6 text-brand-primary" />
+                      </div>
+                      {role.isSystem && (
+                        <span className="text-[9px] bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1 rounded-full uppercase font-bold tracking-widest shadow-[0_0_10px_rgba(200,164,93,0.1)]">
+                          System Role
+                        </span>
+                      )}
                     </div>
+                    
                     <div>
-                      <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                        <span>{role.name}</span>
-                        {role.isSystem && (
-                          <span className="text-[10px] bg-brand-primary/20 text-brand-primary px-2 py-0.5 rounded-full uppercase font-bold">System</span>
-                        )}
+                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-brand-primary transition-colors">
+                        {role.name}
                       </h3>
+                      <p className="text-xs text-text-muted leading-relaxed">
+                        Manages access control and boundaries for {role.name.toLowerCase()} responsibilities.
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex items-center space-x-2">
+                      <div className="px-3 py-1.5 rounded-lg bg-bg-dark border border-border-subtle flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                        <span className="text-[10px] font-bold text-text-main uppercase tracking-wider">{activePerms} Active Permissions</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => openEditModal(role)} className="p-2 text-text-muted transition-colors" title="Edit Role">
-                      <Edit className="w-4 h-4" />
+
+                  <div className="p-4 border-t border-border-subtle bg-bg-dark/50 flex items-center justify-end space-x-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => openEditModal(role)} 
+                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md hover:bg-brand-primary/10 text-text-muted hover:text-brand-primary transition-colors"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span className="text-xs font-bold">Edit</span>
                     </button>
                     {!role.isSystem && (
-                      <button onClick={() => handleDelete(role)} className="p-2 text-danger hover:bg-danger/80 rounded transition-colors" title="Delete Role">
-                        <Trash2 className="w-4 h-4" />
+                      <button 
+                        onClick={() => handleDelete(role)} 
+                        className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md hover:bg-danger/10 text-text-muted hover:text-danger transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="text-xs font-bold">Delete</span>
                       </button>
                     )}
                   </div>
-                </div>
-
-                <div className="space-y-2 mt-4 text-center">
-                  <p className="text-sm text-text-muted font-medium bg-bg-dark py-3 rounded-xl border border-border-subtle">
-                    Click Edit to view Matrix Permissions
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))}
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 
@@ -286,7 +337,20 @@ export default function RolesManagementPage() {
                       {(Object.keys(moduleLabels) as Array<keyof typeof defaultPermissions>).map((modKey) => (
                         <tr key={modKey} className="hover:bg-gray-50 transition-colors">
                           <td className="py-4 px-6">
-                            <span className="text-xs font-bold text-gray-800 tracking-wide">{moduleLabels[modKey]}</span>
+                            <label className="flex items-center space-x-3 cursor-pointer select-none">
+                              <input 
+                                type="checkbox" 
+                                className="w-4 h-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary cursor-pointer"
+                                checked={
+                                  formPermissions[modKey].view && 
+                                  formPermissions[modKey].create && 
+                                  formPermissions[modKey].edit && 
+                                  formPermissions[modKey].delete
+                                }
+                                onChange={(e) => handleToggleAll(modKey, e.target.checked)}
+                              />
+                              <span className="text-xs font-bold text-gray-800 tracking-wide">{moduleLabels[modKey]}</span>
+                            </label>
                           </td>
                           <td className="py-4 px-6">
                             <div className="flex justify-center">

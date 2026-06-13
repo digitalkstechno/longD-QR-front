@@ -33,15 +33,7 @@ import { Badge } from '@/components/ui/Badge';
 import { api } from '@/utils/api';
 import Link from 'next/link';
 
-const data = [
-  { name: 'Mon', queries: 45, resolved: 38 },
-  { name: 'Tue', queries: 52, resolved: 42 },
-  { name: 'Wed', queries: 48, resolved: 45 },
-  { name: 'Thu', queries: 70, resolved: 55 },
-  { name: 'Fri', queries: 65, resolved: 60 },
-  { name: 'Sat', queries: 85, resolved: 72 },
-  { name: 'Sun', queries: 75, resolved: 68 },
-];
+// Mock data replaced by real backend data
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
@@ -155,7 +147,7 @@ export default function DashboardPage() {
 
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
+                <AreaChart data={stats.chartData || []}>
                   <defs>
                     <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#C8A45D" stopOpacity={0.2} />
@@ -183,19 +175,34 @@ export default function DashboardPage() {
               Recent Activity
             </h3>
             <div className="space-y-6">
-              {[
-                { type: 'resolved', msg: 'Ticket TKT-2025-001 resolved by John', time: '2m ago' },
-                { type: 'escalated', msg: 'Ticket TKT-2025-002 escalated to Supervisor', time: '12m ago' },
-                { type: 'assigned', msg: 'New ticket assigned to Sarah', time: '25m ago' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start space-x-3">
-                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${item.type === 'resolved' ? 'bg-success' : item.type === 'escalated' ? 'bg-danger' : 'bg-brand-primary'}`} />
-                  <div className="flex-1">
-                    <p className="text-xs text-text-main leading-tight mb-1">{item.msg}</p>
-                    <p className="text-[10px] text-text-muted uppercase font-bold">{item.time}</p>
+              {stats.recentTickets?.slice(0, 5).map((ticket: any) => {
+                let type = 'assigned';
+                let msg = `New ticket ${ticket.id} assigned to ${ticket.assignedStaffId?.name || 'Unassigned'}`;
+                
+                if (ticket.status === 'Resolved') {
+                  type = 'resolved';
+                  msg = `Ticket ${ticket.id} resolved`;
+                } else if (ticket.status === 'Escalated' || ticket.status === 'Time Expired') {
+                  type = 'escalated';
+                  msg = `Ticket ${ticket.id} escalated`;
+                }
+
+                const timeDiff = Math.floor((new Date().getTime() - new Date(ticket.updatedAt || ticket.createdAt).getTime()) / 60000);
+                const timeStr = timeDiff < 60 ? `${timeDiff}m ago` : timeDiff < 1440 ? `${Math.floor(timeDiff / 60)}h ago` : `${Math.floor(timeDiff / 1440)}d ago`;
+
+                return (
+                  <div key={ticket.id} className="flex items-start space-x-3">
+                    <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${type === 'resolved' ? 'bg-success' : type === 'escalated' ? 'bg-danger' : 'bg-brand-primary'}`} />
+                    <div className="flex-1">
+                      <p className="text-xs text-text-main leading-tight mb-1">{msg}</p>
+                      <p className="text-[10px] text-text-muted uppercase font-bold">{timeStr}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+              {(!stats.recentTickets || stats.recentTickets.length === 0) && (
+                <p className="text-xs text-text-muted">No recent activity.</p>
+              )}
             </div>
           </Card>
         </div>

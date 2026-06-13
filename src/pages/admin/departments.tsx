@@ -128,7 +128,7 @@ export default function DepartmentManagementPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {departments.map((dept, i) => {
             const deptTickets = tickets.filter(t => t.departmentId === dept.id);
             const activeTickets = deptTickets.filter(t => t.status === 'Open' || t.status === 'In Progress').length;
