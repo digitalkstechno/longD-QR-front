@@ -38,11 +38,13 @@ import Link from 'next/link';
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('all');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statsData = await api.getDashboardStats();
+        setLoading(true);
+        const statsData = await api.getDashboardStats(period);
         setStats(statsData);
       } catch (err) {
         console.error('Error fetching dashboard data', err);
@@ -51,7 +53,20 @@ export default function DashboardPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [period]);
+
+  const handleExport = async () => {
+    try {
+      const blob = await api.exportTicketsCSV();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+    } catch (err) {
+      console.error('Failed to export', err);
+    }
+  };
 
   if (loading || !stats) {
     return (
@@ -86,11 +101,20 @@ export default function DashboardPage() {
             <p className="text-text-muted text-sm">System status and query performance for today.</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button className="space-x-2">
-              <Filter className="w-4 h-4" />
-              <span>Filter Data</span>
-            </Button>
-            <Button className="space-x-2">
+            <div className="relative">
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="appearance-none bg-bg-card border border-border-subtle text-text-main text-sm rounded-lg px-4 py-2.5 pr-8 hover:border-brand-primary/50 focus:outline-none focus:border-brand-primary transition-colors cursor-pointer font-medium"
+              >
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">Last 30 Days</option>
+                <option value="all">All Time</option>
+              </select>
+              <Filter className="w-3.5 h-3.5 text-text-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <Button className="space-x-2" onClick={handleExport}>
               <Download className="w-4 h-4" />
               <span>Export Reports</span>
             </Button>

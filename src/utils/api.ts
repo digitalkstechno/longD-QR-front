@@ -322,8 +322,8 @@ export const api = {
     if (!res.ok) throw new Error('Failed to fetch tickets');
     return res.json();
   },
-  getDashboardStats: async () => {
-    const res = await fetch(`${API_URL}/tickets/dashboard/stats`, { headers: getAuthHeaders() });
+  getDashboardStats: async (period = 'all') => {
+    const res = await fetch(`${API_URL}/tickets/dashboard/stats?period=${period}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch dashboard stats');
     return res.json();
   },
