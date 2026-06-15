@@ -62,22 +62,33 @@ export default function RolesManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState('');
+  const [totalPages, setTotalPages] = useState(1);
+  
   const [editingRoleId, setEditingRoleId] = useState('');
   const [formName, setFormName] = useState('');
   const [formPermissions, setFormPermissions] = useState<typeof defaultPermissions>(defaultPermissions);
 
   const fetchRoles = async () => {
     try {
-      const data = await api.getRoles();
-      setRoles(data);
+      const res = await api.getRoles(page, limit, search);
+      setRoles(res.data || []);
+      if (res.pagination) {
+        setTotalPages(res.pagination.totalPages || 1);
+      }
     } catch (err) {
       toast.error('Failed to load roles');
     }
   };
 
   useEffect(() => {
-    fetchRoles();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchRoles();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [page, search]);
 
   const openCreateModal = () => {
     setModalMode('create');
@@ -203,10 +214,19 @@ export default function RolesManagementPage() {
             <h1 className="text-2xl font-bold text-white mb-1">Roles & Permissions</h1>
             <p className="text-text-muted text-sm">Define access control and operational boundaries.</p>
           </div>
-          <Button className="space-x-2" onClick={openCreateModal}>
-            <Plus className="w-4 h-4" />
-            <span>Create Role</span>
-          </Button>
+          <div className="flex items-center space-x-4">
+            <input 
+              type="text" 
+              placeholder="Search roles..." 
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="px-4 py-2 bg-bg-dark border border-border-subtle rounded-lg text-sm focus:outline-none focus:border-brand-primary text-white"
+            />
+            <Button className="space-x-2" onClick={openCreateModal}>
+              <Plus className="w-4 h-4" />
+              <span>Create Role</span>
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -286,6 +306,26 @@ export default function RolesManagementPage() {
             );
           })}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 bg-bg-card p-4 rounded-xl border border-border-subtle">
+            <Button 
+              variant="outline" 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-text-muted">Page {page} of {totalPages}</span>
+            <Button 
+              variant="outline"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

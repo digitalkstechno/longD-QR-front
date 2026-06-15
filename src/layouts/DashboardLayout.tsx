@@ -49,8 +49,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const fetchNotifications = async () => {
     try {
-      const data = await api.getNotifications();
-      setNotifications(data);
+      const res = await api.getNotifications();
+      setNotifications(res.data || []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }

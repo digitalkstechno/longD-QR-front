@@ -12,6 +12,11 @@ export default function CategoriesPage() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState('');
+  const [totalPages, setTotalPages] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -23,11 +28,14 @@ export default function CategoriesPage() {
   const fetchData = async () => {
     try {
       const [catRes, deptRes] = await Promise.all([
-        api.getCategories(),
-        api.getDepartments()
+        api.getCategories(undefined, page, limit, search),
+        api.getDepartments(1, 1000)
       ]);
-      setCategories(catRes);
-      setDepartments(deptRes);
+      setCategories(catRes.data || []);
+      setDepartments(deptRes.data || []);
+      if (catRes.pagination) {
+        setTotalPages(catRes.pagination.totalPages || 1);
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to load data');
@@ -37,8 +45,11 @@ export default function CategoriesPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [page, search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,15 +104,24 @@ export default function CategoriesPage() {
       </Head>
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-text-main mb-1">Categories</h1>
             <p className="text-text-muted text-sm">Manage categories for each department.</p>
           </div>
-          <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="space-x-2">
-            <Plus className="w-4 h-4" />
-            <span>Add Category</span>
-          </Button>
+          <div className="flex items-center space-x-4">
+            <input 
+              type="text" 
+              placeholder="Search categories..." 
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="px-4 py-2 bg-bg-dark border border-border-subtle rounded-lg text-sm focus:outline-none focus:border-brand-primary text-white"
+            />
+            <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="space-x-2">
+              <Plus className="w-4 h-4" />
+              <span>Add Category</span>
+            </Button>
+          </div>
         </div>
 
         {departments.length === 0 && categories.length === 0 && (
@@ -278,6 +298,26 @@ export default function CategoriesPage() {
             );
           })()}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 bg-bg-card p-4 rounded-xl border border-border-subtle">
+            <Button 
+              variant="outline" 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-text-muted">Page {page} of {totalPages}</span>
+            <Button 
+              variant="outline"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

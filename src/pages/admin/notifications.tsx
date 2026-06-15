@@ -29,11 +29,17 @@ const formatTimeAgo = (dateStr: string) => {
 export default function NotificationCenterPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchNotifications = async () => {
     try {
-      const data = await api.getNotifications();
-      setNotifications(data);
+      const res = await api.getNotifications(page, limit);
+      setNotifications(res.data || []);
+      if (res.pagination) {
+        setTotalPages(res.pagination.totalPages || 1);
+      }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -52,7 +58,7 @@ export default function NotificationCenterPage() {
     return () => {
       window.removeEventListener('notificationsUpdated', handleUpdate);
     };
-  }, []);
+  }, [page]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -195,10 +201,22 @@ export default function NotificationCenterPage() {
           )}
         </div>
 
-        {!loading && notifications.length > 0 && (
-          <div className="text-center pt-6">
-            <Button className="text-[10px] font-bold uppercase tracking-widest text-text-muted ">
-              Load Older Notifications
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 bg-bg-card p-4 rounded-xl border border-border-subtle">
+            <Button 
+              variant="outline" 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-text-muted">Page {page} of {totalPages}</span>
+            <Button 
+              variant="outline"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
             </Button>
           </div>
         )}

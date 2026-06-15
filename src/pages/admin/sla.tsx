@@ -23,13 +23,13 @@ export default function SLAPage() {
   const fetchData = async () => {
     try {
       const [catRes, deptRes, slaRes] = await Promise.all([
-        api.getCategories(),
-        api.getDepartments(),
-        api.getCategorySLAs()
+        api.getCategories(undefined, 1, 1000),
+        api.getDepartments(1, 1000),
+        api.getCategorySLAs(1, 1000)
       ]);
-      setCategories(catRes);
-      setDepartments(deptRes);
-      setSLAs(slaRes);
+      setCategories(catRes.data || []);
+      setDepartments(deptRes.data || []);
+      setSLAs(slaRes.data || []);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load data');

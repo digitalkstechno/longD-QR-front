@@ -26,17 +26,17 @@ export default function AssignmentsPage() {
   const fetchData = async () => {
     try {
       const [catRes, deptRes, userRes, assignRes, supervisorRes] = await Promise.all([
-        api.getCategories(),
-        api.getDepartments(),
-        api.getUsers(),
-        api.getCategoryAssignments(),
-        api.getCategorySupervisors()
+        api.getCategories(undefined, 1, 1000),
+        api.getDepartments(1, 1000),
+        api.getUsers(1, 1000),
+        api.getCategoryAssignments(1, 1000),
+        api.getCategorySupervisors(1, 1000)
       ]);
-      setCategories(catRes);
-      setDepartments(deptRes);
-      setUsers(userRes);
-      setAssignments(assignRes);
-      setSupervisors(supervisorRes);
+      setCategories(catRes.data || []);
+      setDepartments(deptRes.data || []);
+      setUsers(userRes.data || []);
+      setAssignments(assignRes.data || []);
+      setSupervisors(supervisorRes.data || []);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load data');

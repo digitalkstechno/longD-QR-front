@@ -18,8 +18,9 @@ const getAuthHeadersForFormData = () => {
 
 export const api = {
   // --- Roles ---
-  getRoles: async () => {
-    const res = await fetch(`${API_URL}/roles`, { headers: getAuthHeaders() });
+  getRoles: async (page = 1, limit = 10, search = '') => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
+    const res = await fetch(`${API_URL}/roles?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch roles');
     return res.json();
   },
@@ -56,8 +57,9 @@ export const api = {
   },
 
   // --- Departments ---
-  getDepartments: async () => {
-    const res = await fetch(`${API_URL}/departments`, { headers: getAuthHeaders() });
+  getDepartments: async (page = 1, limit = 10, search = '') => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
+    const res = await fetch(`${API_URL}/departments?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch departments');
     return res.json();
   },
@@ -99,8 +101,9 @@ export const api = {
   },
 
   // --- QR Codes ---
-  getQRCodes: async () => {
-    const res = await fetch(`${API_URL}/qrcodes`, { headers: getAuthHeaders() });
+  getQRCodes: async (page = 1, limit = 10, search = '') => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
+    const res = await fetch(`${API_URL}/qrcodes?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch QR codes');
     return res.json();
   },
@@ -142,9 +145,11 @@ export const api = {
   },
 
   // --- Categories ---
-  getCategories: async (departmentId?: string) => {
-    const query = departmentId ? new URLSearchParams({ departmentId }).toString() : '';
-    const res = await fetch(`${API_URL}/categories${query ? '?' + query : ''}`, { headers: getAuthHeaders() });
+  getCategories: async (departmentId?: string, page = 1, limit = 10, search = '') => {
+    const params: Record<string, string> = { page: page.toString(), limit: limit.toString(), search };
+    if (departmentId) params.departmentId = departmentId;
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`${API_URL}/categories?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch categories');
     return res.json();
   },
@@ -181,8 +186,9 @@ export const api = {
   },
 
   // --- Category Assignments ---
-  getCategoryAssignments: async () => {
-    const res = await fetch(`${API_URL}/categoryassignments`, { headers: getAuthHeaders() });
+  getCategoryAssignments: async (page = 1, limit = 10) => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
+    const res = await fetch(`${API_URL}/categoryassignments?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category assignments');
     return res.json();
   },
@@ -210,8 +216,9 @@ export const api = {
   },
 
   // --- Category Supervisors ---
-  getCategorySupervisors: async () => {
-    const res = await fetch(`${API_URL}/categorysupervisors`, { headers: getAuthHeaders() });
+  getCategorySupervisors: async (page = 1, limit = 10) => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
+    const res = await fetch(`${API_URL}/categorysupervisors?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category supervisors');
     return res.json();
   },
@@ -239,8 +246,9 @@ export const api = {
   },
 
   // --- Category SLAs ---
-  getCategorySLAs: async () => {
-    const res = await fetch(`${API_URL}/categoryslas`, { headers: getAuthHeaders() });
+  getCategorySLAs: async (page = 1, limit = 10) => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
+    const res = await fetch(`${API_URL}/categoryslas?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category SLAs');
     return res.json();
   },
@@ -268,8 +276,9 @@ export const api = {
   },
 
   // --- Users ---
-  getUsers: async () => {
-    const res = await fetch(`${API_URL}/users`, { headers: getAuthHeaders() });
+  getUsers: async (page = 1, limit = 10, search = '') => {
+    const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
+    const res = await fetch(`${API_URL}/users?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch users');
     return res.json();
   },
@@ -396,14 +405,15 @@ export const api = {
   },
 
   // --- Notifications ---
-  getNotifications: async () => {
+  getNotifications: async (page = 1, limit = 50) => {
     try {
-      const res = await fetch(`${API_URL}/notifications`, { headers: getAuthHeaders() });
-      if (!res.ok) return [];
+      const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
+      const res = await fetch(`${API_URL}/notifications?${query}`, { headers: getAuthHeaders() });
+      if (!res.ok) return { data: [], pagination: { total: 0, page: 1, limit: 50, totalPages: 1 } };
       return res.json();
     } catch (error) {
       console.warn('Unable to load notifications:', error);
-      return [];
+      return { data: [], pagination: { total: 0, page: 1, limit: 50, totalPages: 1 } };
     }
   },
   markAllNotificationsRead: async () => {

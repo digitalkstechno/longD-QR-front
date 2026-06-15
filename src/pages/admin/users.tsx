@@ -30,6 +30,9 @@ export default function UserManagementPage() {
 
   // Filters
   const [search, setSearch] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const [limit, setLimit] = React.useState(10);
+  const [totalPages, setTotalPages] = React.useState(1);
   const [deptFilter, setDeptFilter] = React.useState('All Departments');
   const [roleFilter, setRoleFilter] = React.useState('All Roles');
   const [showFilterPopup, setShowFilterPopup] = React.useState(false);
@@ -49,19 +52,28 @@ export default function UserManagementPage() {
 
   const fetchData = async () => {
     try {
-      const usersData = await api.getUsers();
-      const deptsData = await api.getDepartments();
-      const rolesData = await api.getRoles();
-      setUsers(usersData);
-      setDepartments(deptsData);
-      setRoles(rolesData);
+      const usersRes = await api.getUsers(page, limit, search);
+      const deptsData = await api.getDepartments(1, 1000);
+      const rolesData = await api.getRoles(1, 1000);
+      setUsers(usersRes.data || []);
+      setDepartments(deptsData.data || []);
+      setRoles(rolesData.data || []);
+      if (usersRes.pagination) {
+        setTotalPages(usersRes.pagination.totalPages || 1);
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
   React.useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [page, search]);
+
+  React.useEffect(() => {
     const u = localStorage.getItem('user');
     if (u) {
       setCurrentUser(JSON.parse(u));
@@ -177,10 +189,6 @@ export default function UserManagementPage() {
   const filteredUsers = users.filter(u => {
     if (deptFilter !== 'All Departments' && u.departmentId !== deptFilter) return false;
     if (roleFilter !== 'All Roles' && u.role?._id !== roleFilter && u.role?.id !== roleFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      return u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s);
-    }
     return true;
   });
 
@@ -213,7 +221,7 @@ export default function UserManagementPage() {
                 placeholder="Search by name or email..."
                 className="w-full bg-bg-dark border border-border-subtle rounded-lg py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-brand-primary/50"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
 
@@ -358,6 +366,25 @@ export default function UserManagementPage() {
               </div>
             )}
           </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-border-subtle">
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-text-muted">Page {page} of {totalPages}</span>
+              <Button 
+                variant="outline"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
 
