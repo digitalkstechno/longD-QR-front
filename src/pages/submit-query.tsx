@@ -51,7 +51,8 @@ export default function PublicQueryForm() {
       setDepartment(dept);
 
       // Fetch categories for this dept
-      const cats = await api.getCategories(dept.id);
+      const catsResponse = await api.getCategories(dept.id, 1, 1000);
+      const cats = Array.isArray(catsResponse?.data) ? catsResponse.data : [];
       const activeCats = cats.filter((c: any) => c.isActive);
       setCategories(activeCats);
       if (activeCats.length > 0) {
@@ -227,7 +228,7 @@ export default function PublicQueryForm() {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-text-muted">Category</label>
             {categories.length === 0 ? (
-              <p className="text-xs text-text-muted italic">No categories available</p>
+              <p className="text-xs text-text-muted italic">No categories availableddd</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => {
