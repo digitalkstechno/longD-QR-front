@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { api } from '@/utils/api';
 
 export default function TrackQueryPage() {
   const router = useRouter();
@@ -36,53 +37,56 @@ export default function TrackQueryPage() {
     }
   }, [router.query.id]);
 
-  const handleTrack = (e: React.FormEvent) => {
+  const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     
-    setTimeout(() => {
-      // 1. Check local storage
-      const stored = localStorage.getItem('submitted_queries');
-      let foundQuery = null;
-
-      if (stored) {
-        const queries = JSON.parse(stored);
-        foundQuery = queries.find(
-          (q: any) => 
-            q.id.toLowerCase() === queryId.trim().toLowerCase() && 
-            q.mobile.replace(/\D/g, '').includes(mobile.replace(/\D/g, ''))
-        );
-      }
-
-      // 2. Fallback to hardcoded mock only if they search for 'QRY-2026-001'
-      if (!foundQuery && queryId.trim().toUpperCase() === 'QRY-2026-001') {
-        foundQuery = {
-          id: 'QRY-2026-001',
-          customer: 'Alexander Wright',
-          status: 'In Progress',
-          priority: 'High',
-          category: 'Technical Support',
-          assignedTo: 'David Chen',
-          createdDate: 'June 03, 2026 10:30 AM',
-          expectedResolution: 'Within 4 Hours',
-          timeline: [
-            { title: 'Query Submitted', time: '10:30 AM', desc: 'Query successfully logged in the system.', status: 'completed' },
-            { title: 'Department Assigned', time: '10:32 AM', desc: 'Routed to Technical Support department.', status: 'completed' },
-            { title: 'Agent Assigned', time: '10:35 AM', desc: 'Assigned to David Chen for investigation.', status: 'completed' },
-            { title: 'Work in Progress', time: '10:40 AM', desc: 'Agent is currently working on the resolution.', status: 'active' },
-            { title: 'Resolution', time: '--:--', desc: 'Pending agent confirmation.', status: 'pending' },
-          ]
-        };
-      }
-
-      if (foundQuery) {
-        setStatus(foundQuery);
-      } else {
+    try {
+      // Fetch ticket from API
+      const ticket = await api.getTicketById(queryId.trim().toUpperCase());
+      
+      // Validate mobile number
+      const normalizedMobile = mobile.replace(/\D/g, '');
+      const normalizedTicketMobile = ticket.mobileNumber.replace(/\D/g, '');
+      
+      if (normalizedMobile !== normalizedTicketMobile) {
         setError('No query found matching this ID and Mobile Number combination.');
+        setStatus(null);
+        setIsLoading(false);
+        return;
       }
+      
+      // Format ticket for display
+      const formattedTicket = {
+        id: ticket.id,
+        customer: ticket.customerName,
+        status: ticket.status,
+        priority: 'Medium',
+        category: ticket.categoryId?.name || ticket.departmentId?.name || 'Unassigned',
+        department: ticket.departmentId?.name || 'Unassigned',
+        assignedTo: ticket.assignedStaffId?.name || 'Unassigned',
+        createdDate: new Date(ticket.createdAt).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        expectedResolution: ticket.slaResolutionTime ? 
+          `Within ${ticket.slaResolutionTime} ${ticket.slaTimeUnit}` : 
+          'Not specified',
+        timeline: ticket.timeline
+      };
+      
+      setStatus(formattedTicket);
+    } catch (err) {
+      console.error('Error tracking query:', err);
+      setError('No query found matching this ID and Mobile Number combination.');
+      setStatus(null);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -120,7 +124,7 @@ export default function TrackQueryPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input 
                   label="Query ID"
-                  placeholder="e.g. QRY-2026-001"
+                  placeholder="e.g. TKT-2026-0001"
                   value={queryId}
                   onChange={(e) => setQueryId(e.target.value)}
                   required
@@ -242,15 +246,14 @@ export default function TrackQueryPage() {
                     {status.timeline.map((item: any, i: number) => (
                       <div key={i} className="flex items-start space-x-6 relative">
                         <div className={`w-6 h-6 rounded-full border-4 border-bg-card flex items-center justify-center z-10 ${
-                          item.status === 'completed' ? 'bg-success' : 
-                          item.status === 'active' ? 'bg-brand-primary' : 'bg-border-subtle'
+                          i === status.timeline.length - 1 ? 'bg-brand-primary' : 'bg-success'
                         }`}>
-                          {item.status === 'completed' && <CheckCircle2 className="w-3 h-3 text-white" />}
-                          {item.status === 'active' && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                          {i !== status.timeline.length - 1 && <CheckCircle2 className="w-3 h-3 text-white" />}
+                          {i === status.timeline.length - 1 && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className={`text-sm font-bold ${item.status === 'pending' ? 'text-text-muted' : 'text-text-main'}`}>
+                            <h4 className={`text-sm font-bold ${i === status.timeline.length - 1 ? 'text-text-main' : 'text-text-main'}`}>
                               {item.title}
                             </h4>
                             <span className="text-[10px] text-text-muted font-mono">{item.time}</span>

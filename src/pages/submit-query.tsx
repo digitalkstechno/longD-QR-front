@@ -116,6 +116,15 @@ export default function PublicQueryForm() {
         } else {
           toast.success(tickets.length > 1 ? 'Queries submitted successfully!' : 'Query submitted successfully!');
         }
+        
+        // Save to localStorage for backward compatibility
+        const existingQueries = JSON.parse(localStorage.getItem('submitted_queries') || '[]');
+        const newQueries = tickets.map(ticket => ({
+          id: ticket.id,
+          mobile: mobile
+        }));
+        localStorage.setItem('submitted_queries', JSON.stringify([...existingQueries, ...newQueries]));
+        
         router.push(`/success?id=${tickets.map(t => t.id).join(',')}`);
       } else {
         toast.error(`Failed to submit query: ${errors[0] || 'Unknown error'}`);
