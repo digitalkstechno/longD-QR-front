@@ -43,6 +43,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const initialLoadTimeRef = useRef<number>(Date.now());
   const router = useRouter();
@@ -75,6 +77,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   useEffect(() => {
+    const handleStart = () => setIsPageLoading(true);
+    const handleComplete = () => setIsPageLoading(false);
+
+    router.events.on('routeChangeStart', handleStart);
+    router.events.on('routeChangeComplete', handleComplete);
+    router.events.on('routeChangeError', handleComplete);
+
+    return () => {
+      router.events.off('routeChangeStart', handleStart);
+      router.events.off('routeChangeComplete', handleComplete);
+      router.events.off('routeChangeError', handleComplete);
+    };
+  }, [router]);
+
+  useEffect(() => {
     const u = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     if (!u || !token) {
@@ -83,11 +100,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     setUser(JSON.parse(u));
+    setIsLoading(false);
     fetchNotifications();
 
     // Setup Socket.IO connection
     const socketUrl = BASE_URL.replace(/\/api$/, '');
-    const socket = io(socketUrl);
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/api/socket.io';
+    const socket = io(socketUrl, { path: socketPath });
 
     socket.on('new_ticket', (ticket) => {
       const createdAt = ticket?.createdAt ? new Date(ticket.createdAt).getTime() : null;
@@ -165,6 +184,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-bg-dark text-text-main flex relative font-sans">
+
       {/* Sidebar Overlay on Mobile */}
       {isSidebarOpen && (
         <div 
@@ -175,7 +195,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar */}
       <aside 
-        className={`fixed lg:sticky lg:top-0 lg:self-start lg:h-screen inset-y-0 left-0 z-50 w-72 bg-bg-card border-r border-border-subtle transition-all duration-300 ease-in-out ${
+        className={`fixed lg:sticky lg:top-0 lg:self-start lg:h-screen inset-y-0 left-0 z-50 w-72 bg-bg-card border-r border-border-subtle ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'
         }`}
       >
@@ -221,7 +241,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   title={!isSidebarOpen ? item.label : undefined}
                 >
                   <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${isActive ? 'text-brand-primary scale-110' : 'group-hover:text-brand-primary group-hover:scale-110'}`} />
-                  <span className={`font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
+                  <span className={`font-semibold text-sm whitespace-nowrap ${
                     isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 lg:hidden'
                   }`}>
                     {item.label}
@@ -244,6 +264,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onClick={() => {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
+                localStorage.removeItem('userId');
                 router.push('/login');
               }}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-danger hover:bg-danger/10 transition-all duration-300 ${!isSidebarOpen && 'lg:justify-center'}`}
@@ -363,7 +384,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 relative">
+          <AnimatePresence mode="wait">
+            {isPageLoading && (
+              <motion.div 
+                key="page-loader"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-bg-dark/80 backdrop-blur-sm"
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-16 h-16 rounded-2xl bg-white shadow-[0_0_30px_rgba(200,164,93,0.15)] flex items-center justify-center p-2 mb-6"
+                >
+                  <img src="/logo.webp" alt="Logo" className="w-full h-full object-contain" />
+                </motion.div>
+                <div className="w-32 h-1 bg-brand-primary/20 rounded-full overflow-hidden relative">
+                  <motion.div 
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "200%" }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-y-0 left-0 w-1/2 bg-brand-primary rounded-full"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {children}
         </div>
       </main>

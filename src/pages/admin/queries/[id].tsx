@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -63,7 +62,7 @@ export default function TicketDetailPage() {
     return () => clearInterval(interval);
   }, []);
 
-  if (!ticket) return <DashboardLayout><div className="p-8 text-white">Loading...</div></DashboardLayout>;
+  if (!ticket) return <><div className="p-8 text-white">Loading...</div></>;
 
   const timeRemainingMs = new Date(ticket.expiryAt).getTime() - now;
   const isExpired = ticket.status === 'Time Expired' || ticket.status === 'Escalated' || timeRemainingMs <= 0;
@@ -109,7 +108,7 @@ export default function TicketDetailPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Ticket Details - {ticket.id}</title>
       </Head>
@@ -386,6 +385,6 @@ export default function TicketDetailPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

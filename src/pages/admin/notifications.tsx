@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import { Bell, Check, Trash2, Clock, AlertTriangle, AlertCircle, Info, CheckCircle2, RefreshCw, MessageSquare, ShieldAlert, Search, MoreVertical } from 'lucide-react';
 import { api } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 const iconMap: Record<string, React.ElementType> = {
   MessageSquare: MessageSquare,
@@ -35,6 +35,7 @@ export default function NotificationCenterPage() {
 
   const fetchNotifications = async () => {
     try {
+      setLoading(true);
       const res = await api.getNotifications(page, limit);
       setNotifications(res.data || []);
       if (res.pagination) {
@@ -91,11 +92,14 @@ export default function NotificationCenterPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Notifications | Admin Panel</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -122,9 +126,7 @@ export default function NotificationCenterPage() {
         </Card>
 
         <div className="space-y-3">
-          {loading ? (
-            <p className="text-text-muted text-center py-8">Loading notifications...</p>
-          ) : notifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <p className="text-text-muted text-center py-8">No notifications found.</p>
           ) : (
             notifications.map((notif, i) => {
@@ -221,6 +223,7 @@ export default function NotificationCenterPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+      )}
+    </>
   );
 }

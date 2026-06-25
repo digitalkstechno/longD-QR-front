@@ -68,6 +68,12 @@ body, h1, h2, h3, h4, .royal-font {
   -webkit-text-fill-color: transparent;
 }
 
+@keyframes pageload {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(400%); }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

@@ -1,6 +1,5 @@
 import React from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import {
   Building2,
@@ -24,8 +23,10 @@ import { Modal } from '@/components/ui/Modal';
 import { storage, Ticket, Department } from '@/utils/storage';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function DepartmentManagementPage() {
+  const [loading, setLoading] = React.useState(true);
   const [departments, setDepartments] = React.useState<Department[]>([]);
   const [tickets, setTickets] = React.useState<Ticket[]>([]);
   
@@ -42,6 +43,7 @@ export default function DepartmentManagementPage() {
 
   const fetchDepartments = async () => {
     try {
+      setLoading(true);
       const res = await api.getDepartments(page, limit, search);
       setDepartments(res.data || []);
       if (res.pagination) {
@@ -49,6 +51,8 @@ export default function DepartmentManagementPage() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,11 +129,14 @@ export default function DepartmentManagementPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Department Management | Admin Panel</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -251,6 +258,7 @@ export default function DepartmentManagementPage() {
           </div>
         )}
       </div>
+      )}
 
       <Modal
         isOpen={isModalOpen}
@@ -272,6 +280,6 @@ export default function DepartmentManagementPage() {
           </div>
         </div>
       </Modal>
-    </DashboardLayout>
+    </>
   );
 }

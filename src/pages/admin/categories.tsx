@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Plus, Edit2, Trash2, Tags, Building2 } from 'lucide-react';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -98,11 +98,14 @@ export default function CategoriesPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Categories | Admin</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
@@ -319,6 +322,7 @@ export default function CategoriesPage() {
           </div>
         )}
       </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -385,6 +389,6 @@ export default function CategoriesPage() {
           </Card>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import {
   MessageSquare,
@@ -32,6 +31,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { api } from '@/utils/api';
 import Link from 'next/link';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 // Mock data replaced by real backend data
 
@@ -70,11 +70,9 @@ export default function DashboardPage() {
 
   if (loading || !stats) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
-        </div>
-      </DashboardLayout>
+      <>
+        <PageLoader />
+      </>
     );
   }
 
@@ -88,7 +86,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Admin Dashboard | Query Management System</title>
       </Head>
@@ -296,6 +294,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

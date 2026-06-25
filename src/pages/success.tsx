@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 export default function SuccessPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, dept } = router.query;
   
   // Fallback to static ID if not supplied
   const allIds = typeof id === 'string' ? id.split(',') : ['TKT-2026-0001'];
@@ -188,7 +188,7 @@ export default function SuccessPage() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link> */}
-          <Link href="/submit-query" className="w-full sm:w-auto">
+          <Link href={`/submit-query${dept ? `?${dept}` : ''}`} className="w-full sm:w-auto">
             <Button variant="outline" className="w-full h-12 px-8" size="lg">
               Submit Another
             </Button>

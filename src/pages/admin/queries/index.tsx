@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -22,6 +21,7 @@ import Link from 'next/link';
 import { api } from '@/utils/api';
 import { Ticket, Department } from '@/utils/storage';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function TicketsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,36 +31,49 @@ export default function TicketsPage() {
   const [deptFilter, setDeptFilter] = useState('All');
   const [showFilterPopup, setShowFilterPopup] = useState(false);
   const filterPopupRef = useRef<HTMLDivElement>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const u = localStorage.getItem('user');
+    if (u) setCurrentUser(JSON.parse(u));
+  }, []);
+
+  const isAdmin = currentUser?.role?.name === 'Admin';
+  const staffId = !isAdmin ? (currentUser?._id || currentUser?.id) : null;
 
   const fetchData = async () => {
+    if (!currentUser) return;
     try {
-      const deptsData = await api.getDepartments();
-      setDepartments(deptsData);
-      
-      const res = await api.getTickets(page, limit, searchTerm, statusFilter, deptFilter);
-      setTickets(res.data || res); // Handle backward compatibility
+      setLoading(true);
+      const deptsRes = await api.getDepartments();
+      setDepartments(deptsRes?.data || deptsRes || []);
+
+      const res = await api.getTickets(page, limit, searchTerm, statusFilter, deptFilter, 'All', staffId || undefined);
+      setTickets(res.data || res);
       if (res.pagination) {
         setTotalPages(res.pagination.totalPages);
         setTotalRecords(res.pagination.total);
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   React.useEffect(() => {
-    // Debounce the search input
     const timeout = setTimeout(() => {
       fetchData();
     }, 300);
     return () => clearTimeout(timeout);
-  }, [page, searchTerm, statusFilter, deptFilter]);
+  }, [page, searchTerm, statusFilter, deptFilter, currentUser]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -111,11 +124,14 @@ export default function TicketsPage() {
   const filteredTickets = tickets; // Filtering is now handled by the backend
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Query Management | Admin Panel</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -124,10 +140,12 @@ export default function TicketsPage() {
             <p className="text-text-muted text-sm">Monitor and resolve operational customer inquiries.</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button className="space-x-2" onClick={handleExportCSV} disabled={isExporting}>
-              <Download className="w-4 h-4" />
-              <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
-            </Button>
+            {isAdmin && (
+              <Button className="space-x-2" onClick={handleExportCSV} disabled={isExporting}>
+                <Download className="w-4 h-4" />
+                <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
+              </Button>
+            )}
             {/* <Button className="space-x-2">
               <Plus className="w-4 h-4" />
               <span>Manual Entry</span>
@@ -216,102 +234,66 @@ export default function TicketsPage() {
         {/* Table Content */}
         <Card className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-bg-dark text-text-muted text-[10px] uppercase tracking-widest font-bold border-b border-border-subtle">
-                  <th className="px-6 py-4">
-                    <div className="flex items-center space-x-2 cursor-pointer hover:text-brand-primary transition-colors">
-                      <span>Query ID</span>
-                      <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </th>
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Department</th>
-                  <th className="px-6 py-4">Category</th>
-                  <th className="px-6 py-4">Assigned To</th>
-                  <th className="px-6 py-4">Created</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-subtle">
-                {filteredTickets.map((ticket) => {
-                  const departmentName =
-                    (ticket as any)?.departmentId?.name ||
-                    departments.find(d => String(d.id) === String((ticket as any)?.departmentId))?.name ||
-                    'Unknown';
-                  const categoryName = (ticket as any)?.categoryId?.name || 'Unknown';
-                  const assignedToName = (ticket as any)?.assignedStaffId?.name || 'Unassigned';
-                  return (
-                    <tr
-                      key={ticket.id}
-                      className={`transition-all group text-sm ${
-                        ticket.status === 'Time Expired' || ticket.status === 'Escalated'
-                          ? 'bg-danger/5 hover:bg-danger/10'
-                          : 'hover:bg-brand-primary/5'
-                      }`}
-                    >
-                      <td className="px-6 py-4">
-                        <Link href={`/admin/queries/${ticket.id}`} className="font-bold text-brand-primary hover:underline">
-                          {ticket.id}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 text-text-main font-medium">{ticket.customerName}</td>
-                    
-                      <td className="px-6 py-4">
-                        <span className="text-xs text-text-main">{departmentName}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-xs text-text-main">{categoryName}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-xs text-text-main">{assignedToName}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-3 h-3 text-text-muted" />
-                          <span className="font-mono text-xs text-text-main">
-                            {new Date(ticket.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'Resolved' ? 'bg-success' :
-                            ticket.status === 'Escalated' || ticket.status === 'Time Expired' ? 'bg-danger' :
-                              ticket.status === 'In Progress' ? 'bg-info' : 'bg-warning'
-                            }`} />
-                          <span className="text-xs font-bold text-text-main uppercase">{ticket.status}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end space-x-1">
-                          <Link href={`/admin/queries/${ticket.id}`}>
-                            <Button size="sm" className="h-8 w-8 p-0" title="View Details">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/queries/${ticket.id}`}>
-                            <Button size="sm" className="h-8 w-8 p-0" title="Edit Ticket">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                          <Button
-
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleDelete(ticket.id)}
-                            title="Delete Ticket"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-bg-dark text-text-muted text-[10px] uppercase tracking-widest font-bold border-b border-border-subtle">
+                    <th className="px-6 py-4"><div className="flex items-center space-x-2 cursor-pointer hover:text-brand-primary transition-colors"><span>Query ID</span><ArrowUpDown className="w-3 h-3" /></div></th>
+                    <th className="px-6 py-4">Customer</th>
+                    <th className="px-6 py-4">Department</th>
+                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Assigned To</th>
+                    <th className="px-6 py-4">Created</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {filteredTickets.map((ticket) => {
+                    const departmentName = (ticket as any)?.departmentId?.name || departments.find(d => String(d.id) === String((ticket as any)?.departmentId))?.name || 'Unknown';
+                    const categoryName = (ticket as any)?.categoryId?.name || 'Unknown';
+                    const assignedToName = (ticket as any)?.assignedStaffId?.name || 'Unassigned';
+                    return (
+                      <tr key={ticket.id} className={`transition-all group text-sm ${ticket.status === 'Time Expired' || ticket.status === 'Escalated' ? 'bg-danger/5 hover:bg-danger/10' : 'hover:bg-brand-primary/5'}`}>
+                        <td className="px-6 py-4"><Link href={`/admin/queries/${ticket.id}`} className="font-bold text-brand-primary hover:underline">{ticket.id}</Link></td>
+                        <td className="px-6 py-4 text-text-main font-medium">{ticket.customerName}</td>
+                        <td className="px-6 py-4"><span className="text-xs text-text-main">{departmentName}</span></td>
+                        <td className="px-6 py-4"><span className="text-xs text-text-main">{categoryName}</span></td>
+                        <td className="px-6 py-4"><span className="text-xs text-text-main">{assignedToName}</span></td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-3 h-3 text-text-muted" />
+                            <span className="font-mono text-xs text-text-main">{new Date(ticket.createdAt).toLocaleString()}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'Resolved' ? 'bg-success' : ticket.status === 'Escalated' || ticket.status === 'Time Expired' ? 'bg-danger' : ticket.status === 'In Progress' ? 'bg-info' : 'bg-warning'}`} />
+                            <span className="text-xs font-bold text-text-main uppercase">{ticket.status}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end space-x-1">
+                            <Link href={`/admin/queries/${ticket.id}`}>
+                              <Button size="sm" className="h-8 w-8 p-0" title="View Details"><Eye className="w-4 h-4" /></Button>
+                            </Link>
+                            <Link href={`/admin/queries/${ticket.id}`}>
+                              <Button size="sm" className="h-8 w-8 p-0" title="Edit Ticket"><Edit className="w-4 h-4" /></Button>
+                            </Link>
+                            {isAdmin && (
+                              <Button size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(ticket.id)} title="Delete Ticket">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredTickets.length === 0 && (
+                    <tr><td colSpan={8} className="px-6 py-10 text-center text-text-muted text-sm">No queries found.</td></tr>
+                  )}
+                </tbody>
+              </table>
           </div>
 
           {/* Pagination */}
@@ -327,23 +309,21 @@ export default function TicketsPage() {
                 {Array.from({ length: totalPages }).map((_, i) => {
                   const n = i + 1;
                   return (
-                  <button
-                    key={n}
-                    onClick={() => setPage(n)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${n === page ? 'bg-brand-primary text-white shadow-sm' : 'text-text-muted hover:text-brand-primary hover:bg-brand-primary/5'
-                      }`}
-                  >
-                    {n}
-                  </button>
-                )})}
+                    <button key={n} onClick={() => setPage(n)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${n === page ? 'bg-brand-primary text-white shadow-sm' : 'text-text-muted hover:text-brand-primary hover:bg-brand-primary/5'}`}>
+                      {n}
+                    </button>
+                  );
+                })}
               </div>
               <Button size="sm" className="h-8" disabled={page === totalPages || totalPages === 0} onClick={() => setPage(p => p + 1)}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-          </div>
-        </Card>
-      </div>
-    </DashboardLayout>
+            </div>
+          </Card>
+        </div>
+      )}
+    </>
   );
 }

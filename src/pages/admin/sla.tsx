@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Plus, Edit2, Trash2, Tags, Timer } from 'lucide-react';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function SLAPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -88,11 +88,14 @@ export default function SLAPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>SLA Management | Admin</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -264,6 +267,7 @@ export default function SLAPage() {
           )}
         </div>
       </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -324,6 +328,6 @@ export default function SLAPage() {
           </Card>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

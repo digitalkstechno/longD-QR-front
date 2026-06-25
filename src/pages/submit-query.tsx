@@ -125,7 +125,7 @@ export default function PublicQueryForm() {
         }));
         localStorage.setItem('submitted_queries', JSON.stringify([...existingQueries, ...newQueries]));
         
-        router.push(`/success?id=${tickets.map(t => t.id).join(',')}`);
+        router.push(`/success?id=${tickets.map(t => t.id).join(',')}&dept=${slug}`);
       } else {
         toast.error(`Failed to submit query: ${errors[0] || 'Unknown error'}`);
       }
@@ -299,7 +299,12 @@ export default function PublicQueryForm() {
               className="w-full h-12 text-white"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Query'}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting...
+                </span>
+              ) : 'Submit Query'}
             </Button>
           </div>
         </form>

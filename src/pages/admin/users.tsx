@@ -1,6 +1,5 @@
 import React from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import {
   UserPlus,
   Building2,
@@ -21,8 +20,10 @@ import { Modal } from '@/components/ui/Modal';
 import { storage, User, Department } from '@/utils/storage';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function UserManagementPage() {
+  const [loading, setLoading] = React.useState(true);
   const [users, setUsers] = React.useState<any[]>([]);
   const [departments, setDepartments] = React.useState<Department[]>([]);
   const [roles, setRoles] = React.useState<any[]>([]);
@@ -52,6 +53,7 @@ export default function UserManagementPage() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const usersRes = await api.getUsers(page, limit, search);
       const deptsData = await api.getDepartments(1, 1000);
       const rolesData = await api.getRoles(1, 1000);
@@ -63,6 +65,8 @@ export default function UserManagementPage() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,11 +197,14 @@ export default function UserManagementPage() {
   });
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>User Management | Admin Panel</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -387,6 +394,7 @@ export default function UserManagementPage() {
           )}
         </Card>
       </div>
+      )}
 
       <Modal
         isOpen={isModalOpen}
@@ -447,6 +455,6 @@ export default function UserManagementPage() {
         </div>
       </Modal>
 
-    </DashboardLayout>
+    </>
   );
 }

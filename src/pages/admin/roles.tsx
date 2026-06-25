@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import { Shield, Plus, Edit, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 interface MatrixPerms {
   view: boolean;
@@ -58,6 +58,7 @@ const moduleLabels: Record<keyof typeof defaultPermissions, string> = {
 };
 
 export default function RolesManagementPage() {
+  const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -73,6 +74,7 @@ export default function RolesManagementPage() {
 
   const fetchRoles = async () => {
     try {
+      setLoading(true);
       const res = await api.getRoles(page, limit, search);
       setRoles(res.data || []);
       if (res.pagination) {
@@ -80,6 +82,8 @@ export default function RolesManagementPage() {
       }
     } catch (err) {
       toast.error('Failed to load roles');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,11 +207,14 @@ export default function RolesManagementPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Roles & Permissions | Admin Panel</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -309,24 +316,13 @@ export default function RolesManagementPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6 bg-bg-card p-4 rounded-xl border border-border-subtle">
-            <Button 
-              variant="outline" 
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-text-muted">Page {page} of {totalPages}</span>
-            <Button 
-              variant="outline"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Next
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+            <p className="text-sm text-text-muted">Showing page {page} of {totalPages}</p>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
           </div>
         )}
       </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/60 backdrop-blur-sm p-4">
@@ -429,6 +425,6 @@ export default function RolesManagementPage() {
           </motion.div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

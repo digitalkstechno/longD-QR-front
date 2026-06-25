@@ -1,6 +1,5 @@
 import React from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
@@ -34,6 +33,7 @@ import {
 } from 'recharts';
 
 import { api } from '@/utils/api';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function ReportsAnalyticsPage() {
   const [loading, setLoading] = React.useState(true);
@@ -181,16 +181,14 @@ export default function ReportsAnalyticsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
-        </div>
-      </DashboardLayout>
+      <>
+        <PageLoader />
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Operational Reports | Admin Panel</title>
       </Head>
@@ -355,6 +353,6 @@ export default function ReportsAnalyticsPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

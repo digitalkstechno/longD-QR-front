@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import DashboardLayout from '@/layouts/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Plus, Edit2, Trash2, Tags, User, Shield } from 'lucide-react';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function AssignmentsPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -111,11 +111,14 @@ export default function AssignmentsPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head>
         <title>Category Assignments | Admin</title>
       </Head>
 
+      {loading ? (
+        <PageLoader />
+      ) : (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -222,6 +225,7 @@ export default function AssignmentsPage() {
           })}
         </div>
       </div>
+      )}
 
       {/* Unified Assignment Modal */}
       {isModalOpen && (
@@ -283,6 +287,6 @@ export default function AssignmentsPage() {
           </Card>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

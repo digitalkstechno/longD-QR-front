@@ -318,15 +318,12 @@ export const api = {
   },
 
   // --- Tickets ---
-  getTickets: async (page = 1, limit = 10, search = '', status = 'All', departmentId = 'All', categoryId = 'All') => {
-    const query = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      search,
-      status,
-      departmentId,
-      categoryId
-    }).toString();
+  getTickets: async (page = 1, limit = 10, search = '', status = 'All', departmentId = 'All', categoryId = 'All', assignedStaffId?: string) => {
+    const params: Record<string, string> = {
+      page: page.toString(), limit: limit.toString(), search, status, departmentId, categoryId
+    };
+    if (assignedStaffId) params.assignedStaffId = assignedStaffId;
+    const query = new URLSearchParams(params).toString();
     const res = await fetch(`${API_URL}/tickets?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch tickets');
     return res.json();
@@ -407,7 +404,10 @@ export const api = {
   // --- Notifications ---
   getNotifications: async (page = 1, limit = 50) => {
     try {
-      const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      const params: Record<string, string> = { page: page.toString(), limit: limit.toString() };
+      if (userId) params.userId = userId;
+      const query = new URLSearchParams(params).toString();
       const res = await fetch(`${API_URL}/notifications?${query}`, { headers: getAuthHeaders() });
       if (!res.ok) return { data: [], pagination: { total: 0, page: 1, limit: 50, totalPages: 1 } };
       return res.json();
