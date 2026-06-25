@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { initializeSocket, disconnectSocket } from "@/utils/socket";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -21,6 +22,11 @@ export default function App({ Component, pageProps }: AppProps) {
       router.events.off('routeChangeError', end);
     };
   }, [router]);
+
+  useEffect(() => {
+    initializeSocket();
+    return () => disconnectSocket();
+  }, []);
 
   const isAdminPage = router.pathname.startsWith('/admin');
 

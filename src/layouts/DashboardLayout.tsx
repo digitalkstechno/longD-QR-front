@@ -104,22 +104,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchNotifications();
 
     // Setup Socket.IO connection
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || BASE_URL.replace(/\/api$/, '');
-    const socket = io(socketUrl, {
-      path: '/api/socket.io',
+    const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3655';
+    const SOCKET_PATH = process.env.NEXT_PUBLIC_SOCKET_PATH || '/api/socket.io';
+    const socket = io(SOCKET_URL, {
+      path: SOCKET_PATH,
       transports: ['polling', 'websocket'],
-      upgrade: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 20000,
+      withCredentials: false,
     });
-
-    socket.on('connect', () => {
-      console.log('Socket connected:', socket.id, 'transport:', socket.io.engine.transport.name);
-    });
-    socket.on('connect_error', (err) => {
-      console.error('Socket connect error:', err.message);
-    });
+    socket.on('connect', () => console.log('✅ Socket connected:', socket.id, 'via', socket.io.engine.transport.name));
+    socket.on('connect_error', (err) => console.error('❌ Socket error:', err.message));
 
     socket.on('new_ticket', (ticket) => {
       const createdAt = ticket?.createdAt ? new Date(ticket.createdAt).getTime() : null;
