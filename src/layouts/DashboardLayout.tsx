@@ -105,8 +105,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Setup Socket.IO connection
     const socketUrl = BASE_URL.replace(/\/api$/, '');
-    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/api/socket.io';
-    const socket = io(socketUrl, { path: socketPath });
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
+    const socket = io(socketUrl, {
+      path: socketPath,
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+    });
 
     socket.on('new_ticket', (ticket) => {
       const createdAt = ticket?.createdAt ? new Date(ticket.createdAt).getTime() : null;

@@ -91,24 +91,21 @@ export default function PublicQueryForm() {
         finalDescription = `Room: ${roomNumber} - ${description}`;
       }
 
-      const tickets = [];
-      const errors = [];
-      for (const catId of categoryIds) {
-        try {
-          const ticket = await api.createTicket({
+      const results = await Promise.allSettled(
+        categoryIds.map(catId =>
+          api.createTicket({
             customerName: name,
             mobileNumber: mobile,
-            email: email,
+            email,
             departmentId: department.id,
             categoryId: catId,
             description: finalDescription
-          });
-          tickets.push(ticket);
-        } catch (err: any) {
-          console.error('Error for category', catId, err);
-          errors.push(err.message || 'Unknown error');
-        }
-      }
+          })
+        )
+      );
+
+      const tickets = results.filter(r => r.status === 'fulfilled').map((r: any) => r.value);
+      const errors = results.filter(r => r.status === 'rejected').map((r: any) => r.reason?.message || 'Unknown error');
 
       if (tickets.length > 0) {
         if (errors.length > 0) {

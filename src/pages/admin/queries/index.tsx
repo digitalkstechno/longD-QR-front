@@ -5,23 +5,45 @@ import {
   Search,
   Filter,
   Download,
-  Plus,
   Eye,
   Edit,
   Trash2,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Clock
+  Clock,
+  Timer
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import Link from 'next/link';
 import { api } from '@/utils/api';
 import { Ticket, Department } from '@/utils/storage';
 import toast from 'react-hot-toast';
-import { PageLoader } from '@/components/ui/PageLoader';
+
+function CountdownTimer({ expiryAt, status }: { expiryAt: string; status: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const done = status === 'Resolved' || status === 'Time Expired' || status === 'Escalated';
+  if (done) return <span className="text-[10px] font-bold text-danger uppercase">Expired</span>;
+
+  const ms = new Date(expiryAt).getTime() - now;
+  if (ms <= 0) return <span className="text-[10px] font-bold text-danger uppercase">Expired</span>;
+
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const isUrgent = ms < 5 * 60 * 1000;
+  return (
+    <span className={`font-mono text-xs font-bold tabular-nums ${isUrgent ? 'text-danger' : 'text-warning'}`}>
+      {h > 0 ? `${h}h ` : ''}{String(m).padStart(2,'0')}m {String(s).padStart(2,'0')}s
+    </span>
+  );
+}
 
 export default function TicketsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,9 +151,6 @@ export default function TicketsPage() {
         <title>Query Management | Admin Panel</title>
       </Head>
 
-      {loading ? (
-        <PageLoader />
-      ) : (
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -243,54 +262,70 @@ export default function TicketsPage() {
                     <th className="px-6 py-4">Category</th>
                     <th className="px-6 py-4">Assigned To</th>
                     <th className="px-6 py-4">Created</th>
+                    <th className="px-6 py-4">Time Left</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {filteredTickets.map((ticket) => {
-                    const departmentName = (ticket as any)?.departmentId?.name || departments.find(d => String(d.id) === String((ticket as any)?.departmentId))?.name || 'Unknown';
-                    const categoryName = (ticket as any)?.categoryId?.name || 'Unknown';
-                    const assignedToName = (ticket as any)?.assignedStaffId?.name || 'Unassigned';
-                    return (
-                      <tr key={ticket.id} className={`transition-all group text-sm ${ticket.status === 'Time Expired' || ticket.status === 'Escalated' ? 'bg-danger/5 hover:bg-danger/10' : 'hover:bg-brand-primary/5'}`}>
-                        <td className="px-6 py-4"><Link href={`/admin/queries/${ticket.id}`} className="font-bold text-brand-primary hover:underline">{ticket.id}</Link></td>
-                        <td className="px-6 py-4 text-text-main font-medium">{ticket.customerName}</td>
-                        <td className="px-6 py-4"><span className="text-xs text-text-main">{departmentName}</span></td>
-                        <td className="px-6 py-4"><span className="text-xs text-text-main">{categoryName}</span></td>
-                        <td className="px-6 py-4"><span className="text-xs text-text-main">{assignedToName}</span></td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="w-3 h-3 text-text-muted" />
-                            <span className="font-mono text-xs text-text-main">{new Date(ticket.createdAt).toLocaleString()}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'Resolved' ? 'bg-success' : ticket.status === 'Escalated' || ticket.status === 'Time Expired' ? 'bg-danger' : ticket.status === 'In Progress' ? 'bg-info' : 'bg-warning'}`} />
-                            <span className="text-xs font-bold text-text-main uppercase">{ticket.status}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end space-x-1">
-                            <Link href={`/admin/queries/${ticket.id}`}>
-                              <Button size="sm" className="h-8 w-8 p-0" title="View Details"><Eye className="w-4 h-4" /></Button>
-                            </Link>
-                            <Link href={`/admin/queries/${ticket.id}`}>
-                              <Button size="sm" className="h-8 w-8 p-0" title="Edit Ticket"><Edit className="w-4 h-4" /></Button>
-                            </Link>
-                            {isAdmin && (
-                              <Button size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(ticket.id)} title="Delete Ticket">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </td>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        {Array.from({ length: 9 }).map((__, j) => (
+                          <td key={j} className="px-6 py-4"><div className="h-3 bg-border-subtle rounded w-20" /></td>
+                        ))}
                       </tr>
-                    );
-                  })}
-                  {filteredTickets.length === 0 && (
-                    <tr><td colSpan={8} className="px-6 py-10 text-center text-text-muted text-sm">No queries found.</td></tr>
+                    ))
+                  ) : filteredTickets.length === 0 ? (
+                    <tr><td colSpan={9} className="px-6 py-10 text-center text-text-muted text-sm">No queries found.</td></tr>
+                  ) : (
+                    filteredTickets.map((ticket) => {
+                      const departmentName = (ticket as any)?.departmentId?.name || departments.find(d => String(d.id) === String((ticket as any)?.departmentId))?.name || 'Unknown';
+                      const categoryName = (ticket as any)?.categoryId?.name || 'Unknown';
+                      const assignedToName = (ticket as any)?.assignedStaffId?.name || 'Unassigned';
+                      return (
+                        <tr key={ticket.id} className={`transition-all group text-sm ${ticket.status === 'Time Expired' || ticket.status === 'Escalated' ? 'bg-danger/5 hover:bg-danger/10' : 'hover:bg-brand-primary/5'}`}>
+                          <td className="px-6 py-4"><Link href={`/admin/queries/${ticket.id}`} className="font-bold text-brand-primary hover:underline">{ticket.id}</Link></td>
+                          <td className="px-6 py-4 text-text-main font-medium">{ticket.customerName}</td>
+                          <td className="px-6 py-4"><span className="text-xs text-text-main">{departmentName}</span></td>
+                          <td className="px-6 py-4"><span className="text-xs text-text-main">{categoryName}</span></td>
+                          <td className="px-6 py-4"><span className="text-xs text-text-main">{assignedToName}</span></td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="w-3 h-3 text-text-muted" />
+                              <span className="font-mono text-xs text-text-main">{new Date(ticket.createdAt).toLocaleString()}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-1">
+                              <Timer className="w-3 h-3 text-text-muted flex-shrink-0" />
+                              <CountdownTimer expiryAt={(ticket as any).expiryAt} status={ticket.status} />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'Resolved' ? 'bg-success' : ticket.status === 'Escalated' || ticket.status === 'Time Expired' ? 'bg-danger' : ticket.status === 'In Progress' ? 'bg-info' : 'bg-warning'}`} />
+                              <span className="text-xs font-bold text-text-main uppercase">{ticket.status}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end space-x-1">
+                              <Link href={`/admin/queries/${ticket.id}`}>
+                                <Button size="sm" className="h-8 w-8 p-0" title="View Details"><Eye className="w-4 h-4" /></Button>
+                              </Link>
+                              <Link href={`/admin/queries/${ticket.id}`}>
+                                <Button size="sm" className="h-8 w-8 p-0" title="Edit Ticket"><Edit className="w-4 h-4" /></Button>
+                              </Link>
+                              {isAdmin && (
+                                <Button size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(ticket.id)} title="Delete Ticket">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -322,8 +357,7 @@ export default function TicketsPage() {
             </div>
             </div>
           </Card>
-        </div>
-      )}
+      </div>
     </>
   );
 }

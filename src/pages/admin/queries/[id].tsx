@@ -66,8 +66,9 @@ export default function TicketDetailPage() {
 
   const timeRemainingMs = new Date(ticket.expiryAt).getTime() - now;
   const isExpired = ticket.status === 'Time Expired' || ticket.status === 'Escalated' || timeRemainingMs <= 0;
-  const timeRemainingHours = Math.max(0, Math.floor(timeRemainingMs / (1000 * 60 * 60)));
-  const timeRemainingMins = Math.max(0, Math.floor((timeRemainingMs % (1000 * 60 * 60)) / (1000 * 60)));
+  const timeRemainingHours = Math.max(0, Math.floor(timeRemainingMs / 3600000));
+  const timeRemainingMins = Math.max(0, Math.floor((timeRemainingMs % 3600000) / 60000));
+  const timeRemainingSecs = Math.max(0, Math.floor((timeRemainingMs % 60000) / 1000));
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
@@ -270,8 +271,8 @@ export default function TicketDetailPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-xl font-mono font-bold text-warning tracking-tighter">
-                    {timeRemainingHours}h {timeRemainingMins}m
+                  <p className="text-xl font-mono font-bold text-warning tracking-tighter tabular-nums">
+                    {timeRemainingHours > 0 ? `${timeRemainingHours}h ` : ''}{String(timeRemainingMins).padStart(2,'0')}m {String(timeRemainingSecs).padStart(2,'0')}s
                   </p>
                 )}
                 <p className="text-[10px] text-text-muted mt-1 uppercase font-bold">
