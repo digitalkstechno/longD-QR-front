@@ -105,10 +105,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Setup Socket.IO connection
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || BASE_URL.replace(/\/api$/, '');
-    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
     const socket = io(socketUrl, {
-      path: socketPath,
-      transports: ['polling', 'websocket'], // polling first so connection always works, upgrades to ws
+      path: '/api/socket.io',
+      transports: ['polling', 'websocket'],
       upgrade: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
