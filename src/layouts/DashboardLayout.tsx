@@ -104,14 +104,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchNotifications();
 
     // Setup Socket.IO connection
-    const socketUrl = BASE_URL.replace(/\/api$/, '');
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || BASE_URL.replace(/\/api$/, '');
     const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
     const socket = io(socketUrl, {
       path: socketPath,
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'], // polling first so connection always works, upgrades to ws
+      upgrade: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id, 'transport:', socket.io.engine.transport.name);
+    });
+    socket.on('connect_error', (err) => {
+      console.error('Socket connect error:', err.message);
     });
 
     socket.on('new_ticket', (ticket) => {
