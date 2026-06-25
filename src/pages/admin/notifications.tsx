@@ -6,6 +6,7 @@ import { api } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { getSocket } from '@/utils/socket';
 
 const iconMap: Record<string, React.ElementType> = {
   MessageSquare: MessageSquare,
@@ -51,13 +52,47 @@ export default function NotificationCenterPage() {
   useEffect(() => {
     fetchNotifications();
 
-    const handleUpdate = () => {
-      fetchNotifications();
-    };
+    const handleUpdate = () => fetchNotifications();
     window.addEventListener('notificationsUpdated', handleUpdate);
+
+    const socket = getSocket();
+    const handleNewTicket = (ticket: any) => {
+      const newNotif = {
+        _id: `temp_${Date.now()}`,
+        type: 'new_query',
+        title: 'New Customer Query',
+        desc: `New query received from ${ticket.customerName}.`,
+        icon: 'MessageSquare',
+        color: 'brand',
+        link: `/admin/queries/${ticket.id}`,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+    };
+
+    const handleEscalation = (ticket: any) => {
+      const newNotif = {
+        _id: `temp_${Date.now()}`,
+        type: 'escalation',
+        title: 'Ticket Escalated',
+        desc: `Ticket ${ticket.id} has been escalated due to SLA timeout.`,
+        icon: 'ShieldAlert',
+        color: 'danger',
+        link: `/admin/queries/${ticket.id}`,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+    };
+
+    socket?.on('new_ticket', handleNewTicket);
+    socket?.on('ticket_escalated', handleEscalation);
 
     return () => {
       window.removeEventListener('notificationsUpdated', handleUpdate);
+      socket?.off('new_ticket', handleNewTicket);
+      socket?.off('ticket_escalated', handleEscalation);
     };
   }, [page]);
 
