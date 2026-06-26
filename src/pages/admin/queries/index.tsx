@@ -7,13 +7,13 @@ import {
   Download,
   Eye,
   Edit,
-  Trash2,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   Clock,
   Timer
 } from 'lucide-react';
+import { PageLoader } from '@/components/ui/PageLoader';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Link from 'next/link';
@@ -130,20 +130,9 @@ export default function TicketsPage() {
 
 
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this ticket?")) {
-      try {
-        await api.deleteTicket(id);
-        toast.success('Ticket deleted!');
-        fetchData();
-      } catch (err) {
-        console.error(err);
-        toast.error('Error deleting ticket');
-      }
-    }
-  };
-
   const filteredTickets = tickets; // Filtering is now handled by the backend
+
+  if (loading) return <PageLoader />;
 
   return (
     <>
@@ -268,16 +257,8 @@ export default function TicketsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        {Array.from({ length: 9 }).map((__, j) => (
-                          <td key={j} className="px-6 py-4"><div className="h-3 bg-border-subtle rounded w-20" /></td>
-                        ))}
-                      </tr>
-                    ))
-                  ) : filteredTickets.length === 0 ? (
-                    <tr><td colSpan={9} className="px-6 py-10 text-center text-text-muted text-sm">No queries found.</td></tr>
+                  {filteredTickets.length === 0 ? (
+                    <tr><td colSpan={8} className="px-6 py-10 text-center text-text-muted text-sm">No queries found.</td></tr>
                   ) : (
                     filteredTickets.map((ticket) => {
                       const departmentName = (ticket as any)?.departmentId?.name || departments.find(d => String(d.id) === String((ticket as any)?.departmentId))?.name || 'Unknown';
@@ -316,11 +297,6 @@ export default function TicketsPage() {
                               <Link href={`/admin/queries/${ticket.id}`}>
                                 <Button size="sm" className="h-8 w-8 p-0" title="Edit Ticket"><Edit className="w-4 h-4" /></Button>
                               </Link>
-                              {isAdmin && (
-                                <Button size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(ticket.id)} title="Delete Ticket">
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              )}
                             </div>
                           </td>
                         </tr>

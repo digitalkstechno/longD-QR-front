@@ -9,6 +9,10 @@ import { initializeSocket, disconnectSocket } from "@/utils/socket";
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const isAdminPage = router.pathname.startsWith('/admin');
 
   useEffect(() => {
     const start = () => setLoading(true);
@@ -28,7 +32,36 @@ export default function App({ Component, pageProps }: AppProps) {
     return () => disconnectSocket();
   }, []);
 
-  const isAdminPage = router.pathname.startsWith('/admin');
+  // On every route change, check auth status + 15-day session expiry
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    const expiry = localStorage.getItem('loginExpiry');
+
+    // Check if session has expired (older logins without expiry are treated as valid indefinitely)
+    const isExpired = expiry ? Date.now() > Number(expiry) : false;
+
+    if (isExpired) {
+      // Session expired — clear everything and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('loginExpiry');
+      localStorage.removeItem('userId');
+      setIsAuthenticated(false);
+      setAuthChecked(true);
+      if (isAdminPage) router.replace('/login');
+      return;
+    }
+
+    const authed = !!(token && user);
+    setIsAuthenticated(authed);
+    setAuthChecked(true);
+
+    // If on an admin page without credentials, redirect immediately to login
+    if (isAdminPage && !authed) {
+      router.replace('/login');
+    }
+  }, [router.pathname]);
 
   return (
     <>
@@ -38,9 +71,12 @@ export default function App({ Component, pageProps }: AppProps) {
         </div>
       )}
       {isAdminPage ? (
-        <DashboardLayout>
-          <Component {...pageProps} />
-        </DashboardLayout>
+        // Wait until auth check is complete — show nothing to prevent dashboard flash
+        !authChecked ? null : isAuthenticated ? (
+          <DashboardLayout>
+            <Component {...pageProps} />
+          </DashboardLayout>
+        ) : null // Unauthenticated — redirect in progress, render nothing
       ) : (
         <Component {...pageProps} />
       )}

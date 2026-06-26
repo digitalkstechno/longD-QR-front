@@ -153,14 +153,28 @@ export default function SuccessPage() {
         </p>
 
         <div className="admin-card p-6 md:p-8 mb-8 text-left space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
-            <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">{allIds.length > 1 ? 'Unique Query IDs' : 'Unique Query ID'}</p>
-              <h3 className="text-2xl font-bold text-brand-primary font-mono tracking-tighter">{allIds.join(', ')}</h3>
+          <div className="pb-4 border-b border-border-subtle">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest">
+                {allIds.length > 1 ? `Unique Query IDs (${allIds.length})` : 'Unique Query ID'}
+              </p>
+              <Button size="sm" className="h-8 w-8 p-0" onClick={copyToClipboard} title="Copy all IDs">
+                <ClipboardCheck className="w-4 h-4" />
+              </Button>
             </div>
-            <Button  size="sm" className="h-10 w-10 p-0" onClick={copyToClipboard}>
-              <ClipboardCheck className="w-5 h-5" />
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {allIds.map((tid, i) => (
+                <motion.span
+                  key={tid}
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-mono text-xs font-bold tracking-wide hover:bg-brand-primary/20 transition-colors cursor-default"
+                >
+                  {tid}
+                </motion.span>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

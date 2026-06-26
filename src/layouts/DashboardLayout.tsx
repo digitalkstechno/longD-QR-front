@@ -45,6 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isPageLoading, setIsPageLoading] = useState(false);
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null); // null = checking
   const dropdownRef = useRef<HTMLDivElement>(null);
   const initialLoadTimeRef = useRef<number>(Date.now());
   const router = useRouter();
@@ -94,8 +95,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const u = localStorage.getItem('user');
     const token = localStorage.getItem('token');
+
+    console.log('Auth check - token:', !!token, 'user:', !!u);
+
     if (!u || !token) {
-      router.push('/login');
+      router.replace('/login');
       return;
     }
 
@@ -192,6 +196,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Don't render anything until auth check is complete
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-bg-dark text-text-main flex relative font-sans">

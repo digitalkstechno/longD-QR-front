@@ -6,6 +6,7 @@ import { Plus, Edit2, Trash2, Tags, Building2 } from 'lucide-react';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -24,6 +25,11 @@ export default function CategoriesPage() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
+
+  // Confirm Delete State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingCatId, setDeletingCatId] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -75,15 +81,24 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+  const requestDelete = (id: string) => {
+    setDeletingCatId(id);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
     try {
-      await api.deleteCategory(id);
+      setIsDeleting(true);
+      await api.deleteCategory(deletingCatId);
       toast.success('Category deleted successfully');
       fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to delete category');
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setDeletingCatId('');
     }
   };
 
@@ -196,7 +211,7 @@ export default function CategoriesPage() {
                                 </Button>
                                 <Button 
                                   className="p-2 "
-                                  onClick={() => handleDelete(cat.id)}
+                                  onClick={() => requestDelete(cat.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -285,7 +300,7 @@ export default function CategoriesPage() {
                                 <Button 
                                   variant="ghost" 
                                   className="p-2 text-danger"
-                                  onClick={() => handleDelete(cat.id)}
+                                  onClick={() => requestDelete(cat.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -389,6 +404,16 @@ export default function CategoriesPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeletingCatId(''); }}
+        onConfirm={handleDelete}
+        title="Delete Category"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
     </>
   );
 }

@@ -6,6 +6,7 @@ import { Plus, Edit2, Trash2, Tags, User, Shield } from 'lucide-react';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function AssignmentsPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -22,6 +23,11 @@ export default function AssignmentsPage() {
     staffId: '',
     supervisorId: ''
   });
+
+  // Confirm Delete State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingCatId, setDeletingCatId] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -90,18 +96,27 @@ export default function AssignmentsPage() {
     }
   };
 
-  const handleDeleteAll = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to remove both staff and supervisor assignments?')) return;
+  const requestDeleteAll = (categoryId: string) => {
+    setDeletingCatId(categoryId);
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteAll = async () => {
     try {
-      const existingStaff = getAssignmentForCategory(categoryId);
-      if (existingStaff) await api.deleteCategoryAssignment(categoryId);
-      const existingSupervisor = getSupervisorForCategory(categoryId);
-      if (existingSupervisor) await api.deleteCategorySupervisor(categoryId);
+      setIsDeleting(true);
+      const existingStaff = getAssignmentForCategory(deletingCatId);
+      if (existingStaff) await api.deleteCategoryAssignment(deletingCatId);
+      const existingSupervisor = getSupervisorForCategory(deletingCatId);
+      if (existingSupervisor) await api.deleteCategorySupervisor(deletingCatId);
       toast.success('Assignments removed');
       fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to remove assignments');
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setDeletingCatId('');
     }
   };
 
@@ -206,7 +221,7 @@ export default function AssignmentsPage() {
                                     <Button 
                                       size="sm" 
                                       className="p-1.5"
-                                      onClick={() => handleDeleteAll(cat.id)}
+                                      onClick={() => requestDeleteAll(cat.id)}
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
@@ -287,6 +302,16 @@ export default function AssignmentsPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeletingCatId(''); }}
+        onConfirm={handleDeleteAll}
+        title="Remove Assignments"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmLabel="Remove"
+        isLoading={isDeleting}
+      />
     </>
   );
 }

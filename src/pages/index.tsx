@@ -5,7 +5,12 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/submit-query');
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.replace('/admin/dashboard');
+    } else {
+      router.replace('/login');
+    }
   }, [router]);
 
   return null;

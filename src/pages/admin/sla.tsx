@@ -6,6 +6,7 @@ import { Plus, Edit2, Trash2, Tags, Timer } from 'lucide-react';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function SLAPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -19,6 +20,11 @@ export default function SLAPage() {
     resolutionTime: '',
     timeUnit: 'Minutes' as 'Minutes' | 'Hours'
   });
+
+  // Confirm Delete State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingCatId, setDeletingCatId] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -66,15 +72,24 @@ export default function SLAPage() {
     }
   };
 
-  const handleDelete = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to remove this SLA?')) return;
+  const requestDelete = (categoryId: string) => {
+    setDeletingCatId(categoryId);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
     try {
-      await api.deleteCategorySLA(categoryId);
+      setIsDeleting(true);
+      await api.deleteCategorySLA(deletingCatId);
       toast.success('SLA removed');
       fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to remove SLA');
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setDeletingCatId('');
     }
   };
 
@@ -169,7 +184,7 @@ export default function SLAPage() {
                                   {sla && (
                                     <Button 
                                       className="p-2"
-                                      onClick={() => handleDelete(cat.id)}
+                                      onClick={() => requestDelete(cat.id)}
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </Button>
@@ -243,7 +258,7 @@ export default function SLAPage() {
                                 {sla && (
                                   <Button 
                                     className="p-2"
-                                    onClick={() => handleDelete(cat.id)}
+                                    onClick={() => requestDelete(cat.id)}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -328,6 +343,16 @@ export default function SLAPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeletingCatId(''); }}
+        onConfirm={handleDelete}
+        title="Remove SLA"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmLabel="Remove"
+        isLoading={isDeleting}
+      />
     </>
   );
 }

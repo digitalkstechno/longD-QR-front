@@ -20,6 +20,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { storage, Ticket, Department } from '@/utils/storage';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
@@ -40,6 +41,11 @@ export default function DepartmentManagementPage() {
   const [modalMode, setModalMode] = React.useState<'create' | 'edit'>('create');
   const [editingDeptId, setEditingDeptId] = React.useState('');
   const [deptFormName, setDeptFormName] = React.useState('');
+
+  // Confirm Delete State
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [deletingId, setDeletingId] = React.useState('');
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const fetchDepartments = async () => {
     try {
@@ -104,16 +110,24 @@ export default function DepartmentManagementPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this department?")) {
-      try {
-        await api.deleteDepartment(id);
-        toast.success('Department deleted!');
-        fetchDepartments();
-      } catch (err) {
-        console.error(err);
-        toast.error('Error deleting department');
-      }
+  const requestDelete = (id: string) => {
+    setDeletingId(id);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await api.deleteDepartment(deletingId);
+      toast.success('Department deleted!');
+      fetchDepartments();
+    } catch (err) {
+      console.error(err);
+      toast.error('Error deleting department');
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setDeletingId('');
     }
   };
 
@@ -191,7 +205,7 @@ export default function DepartmentManagementPage() {
                         <button onClick={() => openEditModal(dept)} className="p-2 text-text-muted  transition-colors" title="Edit">
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(dept.id)} className="p-2 text-danger  rounded transition-colors" title="Delete">
+                        <button onClick={() => requestDelete(dept.id)} className="p-2 text-danger  rounded transition-colors" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -280,6 +294,16 @@ export default function DepartmentManagementPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeletingId(''); }}
+        onConfirm={handleDelete}
+        title="Delete Department"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
     </>
   );
 }

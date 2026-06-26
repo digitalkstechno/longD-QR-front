@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { PageLoader } from '@/components/ui/PageLoader';
@@ -71,6 +72,11 @@ export default function RolesManagementPage() {
   const [editingRoleId, setEditingRoleId] = useState('');
   const [formName, setFormName] = useState('');
   const [formPermissions, setFormPermissions] = useState<typeof defaultPermissions>(defaultPermissions);
+
+  // Confirm Delete State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchRoles = async () => {
     try {
@@ -166,16 +172,25 @@ export default function RolesManagementPage() {
     }
   };
 
-  const handleDelete = async (role: Role) => {
+  const requestDelete = (role: Role) => {
     if (role.isSystem) return toast.error('Cannot delete a system role');
-    if (confirm(`Are you sure you want to delete the role ${role.name}?`)) {
-      try {
-        await api.deleteRole(role.id);
-        toast.success('Role deleted!');
-        fetchRoles();
-      } catch (err) {
-        toast.error('Error deleting role');
-      }
+    setDeletingRole(role);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingRole) return;
+    try {
+      setIsDeleting(true);
+      await api.deleteRole(deletingRole.id);
+      toast.success('Role deleted!');
+      fetchRoles();
+    } catch (err) {
+      toast.error('Error deleting role');
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setDeletingRole(null);
     }
   };
 
@@ -300,7 +315,7 @@ export default function RolesManagementPage() {
                     </button>
                     {!role.isSystem && (
                       <button 
-                        onClick={() => handleDelete(role)} 
+                        onClick={() => requestDelete(role)} 
                         className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md hover:bg-danger/10 text-text-muted hover:text-danger transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -425,6 +440,16 @@ export default function RolesManagementPage() {
           </motion.div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeletingRole(null); }}
+        onConfirm={handleDelete}
+        title="Delete Role"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
     </>
   );
 }

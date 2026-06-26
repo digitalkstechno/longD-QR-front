@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { storage, User, Department } from '@/utils/storage';
 import { api } from '@/utils/api';
 import toast from 'react-hot-toast';
@@ -38,6 +39,11 @@ export default function UserManagementPage() {
   const [roleFilter, setRoleFilter] = React.useState('All Roles');
   const [showFilterPopup, setShowFilterPopup] = React.useState(false);
   const filterPopupRef = React.useRef<HTMLDivElement>(null);
+
+  // Confirm Delete State
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [deletingUserId, setDeletingUserId] = React.useState('');
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -166,16 +172,24 @@ export default function UserManagementPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      try {
-        await api.deleteUser(id);
-        toast.success('User deleted!');
-        fetchData();
-      } catch (err) {
-        console.error(err);
-        toast.error('Error deleting user');
-      }
+  const requestDelete = (id: string) => {
+    setDeletingUserId(id);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await api.deleteUser(deletingUserId);
+      toast.success('User deleted!');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Error deleting user');
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setDeletingUserId('');
     }
   };
 
@@ -356,7 +370,7 @@ export default function UserManagementPage() {
                             </>
                           )}
                           {(!currentUser || currentUser.role?.name === 'Admin' || currentUser.role?.permissions?.users?.delete) && (
-                            <Button size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(mappedUser.id)} title="Delete">
+                            <Button size="sm" className="h-8 w-8 p-0" onClick={() => requestDelete(mappedUser.id)} title="Delete">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           )}
@@ -454,6 +468,16 @@ export default function UserManagementPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeletingUserId(''); }}
+        onConfirm={handleDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
 
     </>
   );
