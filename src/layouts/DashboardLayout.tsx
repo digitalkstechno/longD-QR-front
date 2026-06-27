@@ -405,34 +405,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 relative">
-          <AnimatePresence mode="wait">
-            {isPageLoading && (
-              <motion.div 
-                key="page-loader"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-bg-dark/80 backdrop-blur-sm"
+          {isPageLoading ? (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-bg-dark">
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="w-16 h-16 rounded-2xl bg-white shadow-[0_0_30px_rgba(200,164,93,0.15)] flex items-center justify-center p-2 mb-6"
               >
-                <motion.div
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-16 h-16 rounded-2xl bg-white shadow-[0_0_30px_rgba(200,164,93,0.15)] flex items-center justify-center p-2 mb-6"
-                >
-                  <img src="/logo.webp" alt="Logo" className="w-full h-full object-contain" />
-                </motion.div>
-                <div className="w-32 h-1 bg-brand-primary/20 rounded-full overflow-hidden relative">
-                  <motion.div 
-                    initial={{ x: "-100%" }}
-                    animate={{ x: "200%" }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-y-0 left-0 w-1/2 bg-brand-primary rounded-full"
-                  />
-                </div>
+                <img src="/logo.webp" alt="Logo" className="w-full h-full object-contain" />
               </motion.div>
-            )}
-          </AnimatePresence>
-          {children}
+              <div className="w-40 h-1 bg-brand-primary/15 rounded-full overflow-hidden relative">
+                <motion.div 
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '300%' }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                  className="absolute inset-y-0 left-0 w-1/3 bg-brand-primary rounded-full"
+                />
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </div>
       </main>
     </div>

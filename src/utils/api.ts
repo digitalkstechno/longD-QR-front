@@ -1,6 +1,19 @@
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3655';
 export const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
+// Called whenever a server returns 401 — clears session and redirects to login
+const handleUnauthorized = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('loginExpiry');
+  localStorage.removeItem('userId');
+  // Avoid redirect loop if already on login page
+  if (!window.location.pathname.includes('/login')) {
+    window.location.href = '/login';
+  }
+};
+
 const getAuthHeaders = () => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   return {
@@ -16,21 +29,30 @@ const getAuthHeadersForFormData = () => {
   };
 };
 
+// Wrapper: if response is 401, trigger auto-logout
+const guardedFetch = async (...args: Parameters<typeof fetch>): Promise<Response> => {
+  const res = await fetch(...args);
+  if (res.status === 401) {
+    handleUnauthorized();
+  }
+  return res;
+};
+
 export const api = {
   // --- Roles ---
   getRoles: async (page = 1, limit = 10, search = '') => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
-    const res = await fetch(`${API_URL}/roles?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/roles?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch roles');
     return res.json();
   },
   getRoleById: async (id: string) => {
-    const res = await fetch(`${API_URL}/roles/${id}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/roles/${id}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch role');
     return res.json();
   },
   createRole: async (data: any) => {
-    const res = await fetch(`${API_URL}/roles`, {
+    const res = await guardedFetch(`${API_URL}/roles`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -39,7 +61,7 @@ export const api = {
     return res.json();
   },
   updateRole: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/roles/${id}`, {
+    const res = await guardedFetch(`${API_URL}/roles/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -48,7 +70,7 @@ export const api = {
     return res.json();
   },
   deleteRole: async (id: string) => {
-    const res = await fetch(`${API_URL}/roles/${id}`, {
+    const res = await guardedFetch(`${API_URL}/roles/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -59,22 +81,22 @@ export const api = {
   // --- Departments ---
   getDepartments: async (page = 1, limit = 10, search = '') => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
-    const res = await fetch(`${API_URL}/departments?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/departments?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch departments');
     return res.json();
   },
   getDepartmentById: async (id: string) => {
-    const res = await fetch(`${API_URL}/departments/${id}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/departments/${id}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch department');
     return res.json();
   },
   getDepartmentBySlug: async (slug: string) => {
-    const res = await fetch(`${API_URL}/departments/slug/${slug}`);
+    const res = await guardedFetch(`${API_URL}/departments/slug/${slug}`);
     if (!res.ok) throw new Error('Failed to fetch department');
     return res.json();
   },
   createDepartment: async (data: { name: string, description?: string, isActive: boolean }) => {
-    const res = await fetch(`${API_URL}/departments`, {
+    const res = await guardedFetch(`${API_URL}/departments`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -83,7 +105,7 @@ export const api = {
     return res.json();
   },
   updateDepartment: async (id: string, data: { name?: string, description?: string, isActive?: boolean }) => {
-    const res = await fetch(`${API_URL}/departments/${id}`, {
+    const res = await guardedFetch(`${API_URL}/departments/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -92,7 +114,7 @@ export const api = {
     return res.json();
   },
   deleteDepartment: async (id: string) => {
-    const res = await fetch(`${API_URL}/departments/${id}`, { 
+    const res = await guardedFetch(`${API_URL}/departments/${id}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -103,22 +125,22 @@ export const api = {
   // --- QR Codes ---
   getQRCodes: async (page = 1, limit = 10, search = '') => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
-    const res = await fetch(`${API_URL}/qrcodes?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/qrcodes?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch QR codes');
     return res.json();
   },
   getQRCodeById: async (id: string) => {
-    const res = await fetch(`${API_URL}/qrcodes/${id}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/qrcodes/${id}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch QR code');
     return res.json();
   },
   getQRCodeByPath: async (path: string) => {
-    const res = await fetch(`${API_URL}/qrcodes/path/${path}`);
+    const res = await guardedFetch(`${API_URL}/qrcodes/path/${path}`);
     if (!res.ok) throw new Error('Failed to fetch QR code');
     return res.json();
   },
   createQRCode: async (data: any) => {
-    const res = await fetch(`${API_URL}/qrcodes`, {
+    const res = await guardedFetch(`${API_URL}/qrcodes`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -127,7 +149,7 @@ export const api = {
     return res.json();
   },
   updateQRCode: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/qrcodes/${id}`, {
+    const res = await guardedFetch(`${API_URL}/qrcodes/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -136,7 +158,7 @@ export const api = {
     return res.json();
   },
   deleteQRCode: async (id: string) => {
-    const res = await fetch(`${API_URL}/qrcodes/${id}`, { 
+    const res = await guardedFetch(`${API_URL}/qrcodes/${id}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -149,17 +171,17 @@ export const api = {
     const params: Record<string, string> = { page: page.toString(), limit: limit.toString(), search };
     if (departmentId) params.departmentId = departmentId;
     const query = new URLSearchParams(params).toString();
-    const res = await fetch(`${API_URL}/categories?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categories?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch categories');
     return res.json();
   },
   getCategoryById: async (id: string) => {
-    const res = await fetch(`${API_URL}/categories/${id}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categories/${id}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category');
     return res.json();
   },
   createCategory: async (data: any) => {
-    const res = await fetch(`${API_URL}/categories`, {
+    const res = await guardedFetch(`${API_URL}/categories`, {
       method: 'POST',
       headers: data instanceof FormData ? getAuthHeadersForFormData() : getAuthHeaders(),
       body: data instanceof FormData ? data : JSON.stringify(data),
@@ -168,7 +190,7 @@ export const api = {
     return res.json();
   },
   updateCategory: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/categories/${id}`, {
+    const res = await guardedFetch(`${API_URL}/categories/${id}`, {
       method: 'PUT',
       headers: data instanceof FormData ? getAuthHeadersForFormData() : getAuthHeaders(),
       body: data instanceof FormData ? data : JSON.stringify(data),
@@ -177,7 +199,7 @@ export const api = {
     return res.json();
   },
   deleteCategory: async (id: string) => {
-    const res = await fetch(`${API_URL}/categories/${id}`, { 
+    const res = await guardedFetch(`${API_URL}/categories/${id}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -188,17 +210,17 @@ export const api = {
   // --- Category Assignments ---
   getCategoryAssignments: async (page = 1, limit = 10) => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
-    const res = await fetch(`${API_URL}/categoryassignments?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categoryassignments?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category assignments');
     return res.json();
   },
   getCategoryAssignmentByCategoryId: async (categoryId: string) => {
-    const res = await fetch(`${API_URL}/categoryassignments/category/${categoryId}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categoryassignments/category/${categoryId}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category assignment');
     return res.json();
   },
   createCategoryAssignment: async (data: any) => {
-    const res = await fetch(`${API_URL}/categoryassignments`, {
+    const res = await guardedFetch(`${API_URL}/categoryassignments`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -207,7 +229,7 @@ export const api = {
     return res.json();
   },
   deleteCategoryAssignment: async (categoryId: string) => {
-    const res = await fetch(`${API_URL}/categoryassignments/category/${categoryId}`, { 
+    const res = await guardedFetch(`${API_URL}/categoryassignments/category/${categoryId}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -218,17 +240,17 @@ export const api = {
   // --- Category Supervisors ---
   getCategorySupervisors: async (page = 1, limit = 10) => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
-    const res = await fetch(`${API_URL}/categorysupervisors?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categorysupervisors?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category supervisors');
     return res.json();
   },
   getCategorySupervisorByCategoryId: async (categoryId: string) => {
-    const res = await fetch(`${API_URL}/categorysupervisors/category/${categoryId}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categorysupervisors/category/${categoryId}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category supervisor');
     return res.json();
   },
   createCategorySupervisor: async (data: any) => {
-    const res = await fetch(`${API_URL}/categorysupervisors`, {
+    const res = await guardedFetch(`${API_URL}/categorysupervisors`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -237,7 +259,7 @@ export const api = {
     return res.json();
   },
   deleteCategorySupervisor: async (categoryId: string) => {
-    const res = await fetch(`${API_URL}/categorysupervisors/category/${categoryId}`, { 
+    const res = await guardedFetch(`${API_URL}/categorysupervisors/category/${categoryId}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -248,17 +270,17 @@ export const api = {
   // --- Category SLAs ---
   getCategorySLAs: async (page = 1, limit = 10) => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() }).toString();
-    const res = await fetch(`${API_URL}/categoryslas?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categoryslas?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category SLAs');
     return res.json();
   },
   getCategorySLAByCategoryId: async (categoryId: string) => {
-    const res = await fetch(`${API_URL}/categoryslas/category/${categoryId}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/categoryslas/category/${categoryId}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch category SLA');
     return res.json();
   },
   createCategorySLA: async (data: any) => {
-    const res = await fetch(`${API_URL}/categoryslas`, {
+    const res = await guardedFetch(`${API_URL}/categoryslas`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -267,7 +289,7 @@ export const api = {
     return res.json();
   },
   deleteCategorySLA: async (categoryId: string) => {
-    const res = await fetch(`${API_URL}/categoryslas/category/${categoryId}`, { 
+    const res = await guardedFetch(`${API_URL}/categoryslas/category/${categoryId}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -278,17 +300,17 @@ export const api = {
   // --- Users ---
   getUsers: async (page = 1, limit = 10, search = '') => {
     const query = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search }).toString();
-    const res = await fetch(`${API_URL}/users?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/users?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch users');
     return res.json();
   },
   getUserById: async (id: string) => {
-    const res = await fetch(`${API_URL}/users/${id}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/users/${id}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch user');
     return res.json();
   },
   createUser: async (data: any) => {
-    const res = await fetch(`${API_URL}/users`, {
+    const res = await guardedFetch(`${API_URL}/users`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -300,7 +322,7 @@ export const api = {
     return res.json();
   },
   updateUser: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    const res = await guardedFetch(`${API_URL}/users/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -309,7 +331,7 @@ export const api = {
     return res.json();
   },
   deleteUser: async (id: string) => {
-    const res = await fetch(`${API_URL}/users/${id}`, { 
+    const res = await guardedFetch(`${API_URL}/users/${id}`, { 
       method: 'DELETE',
       headers: getAuthHeaders() 
     });
@@ -324,34 +346,34 @@ export const api = {
     };
     if (assignedStaffId) params.assignedStaffId = assignedStaffId;
     const query = new URLSearchParams(params).toString();
-    const res = await fetch(`${API_URL}/tickets?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/tickets?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch tickets');
     return res.json();
   },
   getDashboardStats: async (period = 'all') => {
-    const res = await fetch(`${API_URL}/tickets/dashboard/stats?period=${period}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/tickets/dashboard/stats?period=${period}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch dashboard stats');
     return res.json();
   },
   getStaffDashboardStats: async (staffId: string) => {
     const query = new URLSearchParams({ staffId }).toString();
-    const res = await fetch(`${API_URL}/tickets/staff/stats?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/tickets/staff/stats?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch staff stats');
     return res.json();
   },
   exportTicketsCSV: async (search = '', status = 'All', departmentId = 'All', categoryId = 'All') => {
     const query = new URLSearchParams({ search, status, departmentId, categoryId }).toString();
-    const res = await fetch(`${API_URL}/tickets/export?${query}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/tickets/export?${query}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to export tickets');
     return res.blob();
   },
   getTicketById: async (id: string) => {
-    const res = await fetch(`${API_URL}/tickets/${id}`, { headers: getAuthHeaders() });
+    const res = await guardedFetch(`${API_URL}/tickets/${id}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch ticket');
     return res.json();
   },
   createTicket: async (data: any) => {
-    const res = await fetch(`${API_URL}/tickets`, {
+    const res = await guardedFetch(`${API_URL}/tickets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -363,7 +385,7 @@ export const api = {
     return res.json();
   },
   updateTicket: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/tickets/${id}`, {
+    const res = await guardedFetch(`${API_URL}/tickets/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -372,7 +394,7 @@ export const api = {
     return res.json();
   },
   addNoteToTicket: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/tickets/${id}/notes`, {
+    const res = await guardedFetch(`${API_URL}/tickets/${id}/notes`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -381,7 +403,7 @@ export const api = {
     return res.json();
   },
   deleteTicket: async (id: string) => {
-    const res = await fetch(`${API_URL}/tickets/${id}`, { 
+    const res = await guardedFetch(`${API_URL}/tickets/${id}`, { 
       method: 'DELETE',
       headers: getAuthHeaders() 
     });
@@ -389,7 +411,7 @@ export const api = {
     return res.json();
   },
   login: async (credentials: any) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
+    const res = await guardedFetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
@@ -408,7 +430,7 @@ export const api = {
       const params: Record<string, string> = { page: page.toString(), limit: limit.toString() };
       if (userId) params.userId = userId;
       const query = new URLSearchParams(params).toString();
-      const res = await fetch(`${API_URL}/notifications?${query}`, { headers: getAuthHeaders() });
+      const res = await guardedFetch(`${API_URL}/notifications?${query}`, { headers: getAuthHeaders() });
       if (!res.ok) return { data: [], pagination: { total: 0, page: 1, limit: 50, totalPages: 1 } };
       return res.json();
     } catch (error) {
@@ -417,7 +439,7 @@ export const api = {
     }
   },
   markAllNotificationsRead: async () => {
-    const res = await fetch(`${API_URL}/notifications/mark-all-read`, {
+    const res = await guardedFetch(`${API_URL}/notifications/mark-all-read`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
@@ -425,7 +447,7 @@ export const api = {
     return res.json();
   },
   markAsRead: async (id: string) => {
-    const res = await fetch(`${API_URL}/notifications/${id}/read`, {
+    const res = await guardedFetch(`${API_URL}/notifications/${id}/read`, {
       method: 'PATCH',
       headers: getAuthHeaders()
     });
@@ -433,7 +455,7 @@ export const api = {
     return res.json();
   },
   deleteNotification: async (id: string) => {
-    const res = await fetch(`${API_URL}/notifications/${id}`, {
+    const res = await guardedFetch(`${API_URL}/notifications/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -441,3 +463,5 @@ export const api = {
     return res.json();
   }
 };
+
+

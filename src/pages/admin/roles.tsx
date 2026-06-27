@@ -233,7 +233,7 @@ export default function RolesManagementPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Roles & Permissions</h1>
+            <h1 className="text-2xl font-bold text-text-main mb-1">Roles & Permissions</h1>
             <p className="text-text-muted text-sm">Define access control and operational boundaries.</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -277,15 +277,13 @@ export default function RolesManagementPage() {
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary to-brand-light opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   <div className="p-6 flex-1">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 border border-brand-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                        <Shield className="w-6 h-6 text-brand-primary" />
-                      </div>
+                    <div className="flex items-start justify-between mb-4">
                       {role.isSystem && (
-                        <span className="text-[9px] bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1 rounded-full uppercase font-bold tracking-widest shadow-[0_0_10px_rgba(200,164,93,0.1)]">
+                        <span className="text-[9px] bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1 rounded-full uppercase font-bold tracking-widest">
                           System Role
                         </span>
                       )}
+                      {!role.isSystem && <div />}
                     </div>
                     
                     <div>
@@ -453,3 +451,4 @@ export default function RolesManagementPage() {
     </>
   );
 }
+

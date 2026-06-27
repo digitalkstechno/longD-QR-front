@@ -32,8 +32,8 @@ export default function App({ Component, pageProps }: AppProps) {
     return () => disconnectSocket();
   }, []);
 
-  // On every route change, check auth status + 15-day session expiry
-  useEffect(() => {
+  // Helper: checks token + expiry, returns true if valid
+  const checkAuth = () => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     const expiry = localStorage.getItem('loginExpiry');
@@ -41,19 +41,19 @@ export default function App({ Component, pageProps }: AppProps) {
     // Check if session has expired (older logins without expiry are treated as valid indefinitely)
     const isExpired = expiry ? Date.now() > Number(expiry) : false;
 
-    if (isExpired) {
-      // Session expired — clear everything and redirect to login
+    if (isExpired || (!token && !user)) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('loginExpiry');
       localStorage.removeItem('userId');
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      if (isAdminPage) router.replace('/login');
-      return;
+      return false;
     }
+    return !!(token && user);
+  };
 
-    const authed = !!(token && user);
+  // On every route change, check auth status + session expiry
+  useEffect(() => {
+    const authed = checkAuth();
     setIsAuthenticated(authed);
     setAuthChecked(true);
 
@@ -62,6 +62,18 @@ export default function App({ Component, pageProps }: AppProps) {
       router.replace('/login');
     }
   }, [router.pathname]);
+
+  // Periodic check every 60 seconds — logs out even if tab stays open
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const authed = checkAuth();
+      if (!authed && isAdminPage) {
+        setIsAuthenticated(false);
+        router.replace('/login');
+      }
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [isAdminPage]);
 
   return (
     <>

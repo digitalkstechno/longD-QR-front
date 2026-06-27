@@ -149,16 +149,13 @@ export default function AssignmentsPage() {
 
             return (
               <div key={dept.id} className="space-y-4">
-                <h2 className="text-xl font-bold text-brand-primary flex items-center">
-                  <span className="w-2 h-6 bg-brand-primary rounded mr-3"></span>
-                  {dept.name} Department
-                </h2>
+           
                 
                 <Card className="p-0 overflow-hidden flex flex-col h-[400px]">
                   <div className="p-4 border-b border-border-subtle flex items-center justify-between shrink-0">
                     <h3 className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center">
-                      <Shield className="w-4 h-4 mr-2" />
-                      Assignments
+                        <span className="w-2 h-6 bg-brand-primary rounded mr-3"></span>
+                  {dept.name} Department
                     </h3>
                     <Button onClick={() => { resetForm(); setIsModalOpen(true); }} size="sm" className="space-x-2">
                       <Plus className="w-3 h-3" />
@@ -168,11 +165,11 @@ export default function AssignmentsPage() {
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle sticky top-0 z-10">
-                          <th className="px-4 py-3 font-bold">Category</th>
-                          <th className="px-4 py-3 font-bold">Assigned Staff</th>
-                          <th className="px-4 py-3 font-bold">Assigned Supervisor</th>
-                          <th className="px-4 py-3 font-bold text-right">Actions</th>
+                        <tr className="bg-bg-dark text-text-muted text-sm font-semibold border-b border-border-subtle sticky top-0 z-10">
+                          <th className="px-4 py-3">Category</th>
+                          <th className="px-4 py-3">Assigned Staff</th>
+                          <th className="px-4 py-3">Assigned Supervisor</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border-subtle">
@@ -190,14 +187,14 @@ export default function AssignmentsPage() {
                                 {assignment?.staffId?.name ? (
                                   <span className="text-text-main flex items-center">{assignment.staffId.name}</span>
                                 ) : (
-                                  <span className="text-text-muted italic">Not assigned</span>
+                                    <span className="text-text-muted">Not assigned</span>
                                 )}
                               </td>
                               <td className="px-4 py-3">
                                 {supervisor?.supervisorId?.name ? (
                                   <span className="text-text-main flex items-center">{supervisor.supervisorId.name}</span>
                                 ) : (
-                                  <span className="text-text-muted italic">Not assigned</span>
+                                    <span className="text-text-muted">Not assigned</span>
                                 )}
                               </td>
                               <td className="px-4 py-3 text-right">
@@ -315,3 +312,4 @@ export default function AssignmentsPage() {
     </>
   );
 }
+

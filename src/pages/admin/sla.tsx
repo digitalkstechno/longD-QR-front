@@ -129,19 +129,21 @@ export default function SLAPage() {
             if (deptCategories.length === 0) return null;
 
             return (
-              <div key={dept.id} className="space-y-4">
-                <h2 className="text-xl font-bold text-brand-primary flex items-center">
-                  <span className="w-2 h-6 bg-brand-primary rounded mr-3"></span>
-                  {dept.name}
-                </h2>
+              <div key={dept.id}>
                 <Card className="p-0 overflow-hidden flex flex-col h-[400px]">
+                  <div className="p-4 border-b border-border-subtle flex items-center justify-between shrink-0">
+                    <h3 className="text-md font-bold text-text-main flex items-center">
+                      <span className="w-2 h-6 bg-brand-primary rounded mr-3"></span>
+                      {dept.name}
+                    </h3>
+                  </div>
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-left text-sm relative">
                       <thead className="sticky top-0 z-10 bg-bg-dark">
-                        <tr className="text-text-muted uppercase tracking-widest border-b border-border-subtle shadow-sm">
-                          <th className="px-6 py-4 font-bold">Category</th>
-                          <th className="px-6 py-4 font-bold">Resolution Time</th>
-                          <th className="px-6 py-4 font-bold text-right">Actions</th>
+                        <tr className="text-text-muted text-sm font-semibold border-b border-border-subtle shadow-sm">
+                          <th className="px-6 py-4">Category</th>
+                          <th className="px-6 py-4">Resolution Time</th>
+                          <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border-subtle">
@@ -151,7 +153,7 @@ export default function SLAPage() {
                             <tr key={cat.id} className="hover:bg-brand-primary/5 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="flex items-center space-x-3">
-                                  <Tags className="w-5 h-5 text-brand-primary" />
+                                  {/* <Tags className="w-5 h-5 text-brand-primary" /> */}
                                   <span className="font-medium text-text-main">{cat.name}</span>
                                 </div>
                               </td>
@@ -162,7 +164,7 @@ export default function SLAPage() {
                                     <span className="font-medium">{sla.resolutionTime ?? sla.resolutionHours ?? sla.hours} {sla.timeUnit ?? sla.unit}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-text-muted italic">Not configured</span>
+                                  <span className="text-text-muted">Not configured</span>
                                 )}
                               </td>
                               <td className="px-6 py-4 text-right">
@@ -204,18 +206,20 @@ export default function SLAPage() {
 
           {categories.filter(c => !c.departmentId).length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-text-muted flex items-center">
-                <span className="w-2 h-6 bg-border-subtle rounded mr-3"></span>
-                Unassigned Categories
-              </h2>
               <Card className="p-0 overflow-hidden flex flex-col h-[400px]">
+                <div className="p-4 border-b border-border-subtle flex items-center justify-between shrink-0">
+                  <h3 className="text-sm font-bold text-text-main flex items-center">
+                    <span className="w-2 h-6 bg-border-subtle rounded mr-3"></span>
+                    Unassigned Categories
+                  </h3>
+                </div>
                 <div className="overflow-auto flex-1">
                   <table className="w-full text-left text-sm relative">
                     <thead className="sticky top-0 z-10 bg-bg-dark">
-                      <tr className="text-text-muted uppercase tracking-widest border-b border-border-subtle shadow-sm">
-                        <th className="px-6 py-4 font-bold">Category</th>
-                        <th className="px-6 py-4 font-bold">Resolution Time</th>
-                        <th className="px-6 py-4 font-bold text-right">Actions</th>
+                      <tr className="text-text-muted text-sm font-semibold border-b border-border-subtle shadow-sm">
+                        <th className="px-6 py-4">Category</th>
+                        <th className="px-6 py-4">Resolution Time</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
@@ -356,3 +360,4 @@ export default function SLAPage() {
     </>
   );
 }
+

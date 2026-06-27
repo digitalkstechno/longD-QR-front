@@ -11,14 +11,11 @@ export const PageLoader = () => {
       >
         <img src="/logo.webp" alt="Logo" className="w-full h-full object-contain" />
       </motion.div>
-      <div className="w-32 h-1 bg-brand-primary/20 rounded-full overflow-hidden relative">
-        <motion.div 
-          initial={{ x: "-100%" }}
-          animate={{ x: "200%" }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-y-0 left-0 w-1/2 bg-brand-primary rounded-full"
-        />
+      {/* CSS animation — immune to React re-renders */}
+      <div className="w-40 h-1 bg-brand-primary/15 rounded-full overflow-hidden relative">
+        <div className="loader-bar absolute inset-y-0 left-0 w-1/3 bg-brand-primary rounded-full" />
       </div>
     </div>
   );
 };
+

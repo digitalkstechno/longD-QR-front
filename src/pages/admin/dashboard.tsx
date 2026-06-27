@@ -233,7 +233,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-0 overflow-hidden">
             <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Recent Tickets</h3>
+              <h3 className="text-sm font-semibold text-text-main">Recent Tickets</h3>
               <Link href="/admin/queries">
                 <Button variant="ghost" size="sm">View All</Button>
               </Link>
@@ -241,10 +241,10 @@ export default function DashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-bg-dark text-text-muted uppercase tracking-widest border-b border-border-subtle">
-                    <th className="px-4 py-3 font-bold">ID</th>
-                    <th className="px-4 py-3 font-bold">Customer</th>
-                    <th className="px-4 py-3 font-bold">Status</th>
+                  <tr className="bg-bg-dark text-text-muted text-sm font-semibold border-b border-border-subtle">
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
@@ -266,7 +266,7 @@ export default function DashboardPage() {
 
           <Card className="p-0 overflow-hidden">
             <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-              <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Quick Links</h3>
+              <h3 className="text-sm font-semibold text-text-main">Quick Links</h3>
             </div>
             <div className="p-4 space-y-3">
               <Link href="/admin/categories" className="flex items-center p-3 rounded-lg hover:bg-brand-primary/5 transition-colors">
@@ -297,3 +297,4 @@ export default function DashboardPage() {
     </>
   );
 }
+

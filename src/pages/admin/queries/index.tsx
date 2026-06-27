@@ -244,7 +244,7 @@ export default function TicketsPage() {
           <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-bg-dark text-text-muted text-[10px] uppercase tracking-widest font-bold border-b border-border-subtle">
+                  <tr className="bg-bg-dark text-text-muted text-sm font-semibold border-b border-border-subtle">
                     <th className="px-6 py-4"><div className="flex items-center space-x-2 cursor-pointer hover:text-brand-primary transition-colors"><span>Query ID</span><ArrowUpDown className="w-3 h-3" /></div></th>
                     <th className="px-6 py-4">Customer</th>
                     <th className="px-6 py-4">Department</th>
@@ -337,3 +337,4 @@ export default function TicketsPage() {
     </>
   );
 }
+

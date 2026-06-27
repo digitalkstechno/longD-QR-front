@@ -138,7 +138,7 @@ export default function NotificationCenterPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Notifications</h1>
+            <h1 className="text-2xl font-bold text-text-main mb-1">Notifications</h1>
             <p className="text-text-muted text-sm">Stay updated with operational alerts and system activity.</p>
           </div>
           <div className="flex items-center space-x-2">
@@ -218,9 +218,9 @@ export default function NotificationCenterPage() {
                             )}
                           </div>
                           <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-1.5 text-text-muted transition-colors ">
+                            {/* <button className="p-1.5 text-text-muted transition-colors ">
                               <MoreVertical className="w-4 h-4" />
-                            </button>
+                            </button> */}
                             <button
                               onClick={() => deleteNotification(notif._id)}
                               className="p-1.5 text-text-muted hover:text-danger transition-colors"
@@ -262,3 +262,4 @@ export default function NotificationCenterPage() {
     </>
   );
 }
+

@@ -154,7 +154,7 @@ export default function DepartmentManagementPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Departments</h1>
+            <h1 className="text-2xl font-bold text-text-main mb-1">Departments</h1>
             <p className="text-text-muted text-sm">Configure organizational units and monitor service efficiency.</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -195,7 +195,7 @@ export default function DepartmentManagementPage() {
                         <div>
                           <h3 className="text-lg font-bold text-white">{dept.name}</h3>
                           <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-xs text-text-muted font-mono bg-brand-primary/10 px-2 py-0.5 rounded">{dept.description || 'No description'}</span>
+                            {/* <span className="text-xs text-text-muted font-mono bg-brand-primary/10 px-2 py-0.5 rounded">{dept.description || 'No description'}</span> */}
                             <Users className="w-3.5 h-3.5 text-text-muted" />
                             <span className="text-xs text-text-muted font-bold uppercase">{usersCount} Active Members</span>
                           </div>
@@ -307,3 +307,4 @@ export default function DepartmentManagementPage() {
     </>
   );
 }
+

@@ -222,7 +222,7 @@ export default function UserManagementPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">User Management</h1>
+            <h1 className="text-2xl font-bold text-text-main mb-1">User Management</h1>
             <p className="text-text-muted text-sm">Manage administrative access and team assignments.</p>
           </div>
           {(!currentUser || currentUser.role?.name === 'Admin' || currentUser.role?.permissions?.users?.create) && (
@@ -310,7 +310,7 @@ export default function UserManagementPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-bg-dark text-text-muted text-[10px] uppercase tracking-widest font-bold border-b border-border-subtle">
+                <tr className="bg-bg-dark text-text-muted text-sm font-semibold border-b border-border-subtle">
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Department</th>
                   <th className="px-6 py-4">Role</th>
@@ -482,3 +482,4 @@ export default function UserManagementPage() {
     </>
   );
 }
+

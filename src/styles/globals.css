@@ -27,15 +27,23 @@
   --foreground: #1F2937;
 }
 
+/* ── Global Font: Inter — clean, simple, no italic ─────────────────────────── */
+
+*, *::before, *::after {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal !important;   /* No italic anywhere in the project */
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
 }
 
 body, h1, h2, h3, h4, .royal-font {
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal !important;
   margin: 0;
-  -webkit-font-smoothing: antialiased;
 }
 
 /* Modern Admin utility */
@@ -72,6 +80,16 @@ body, h1, h2, h3, h4, .royal-font {
   0% { transform: translateX(-100%); }
   50% { transform: translateX(150%); }
   100% { transform: translateX(400%); }
+}
+
+/* Loader bar — CSS animation so React re-renders don't restart it */
+@keyframes loaderShimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.loader-bar {
+  animation: loaderShimmer 1.2s linear infinite;
 }
 
 /* Custom Scrollbar */
